@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "MessMate",
+    "slug": "messmate-smart-mess-system",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "org.messmate.student",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "org.messmate.student",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#173d30"
+        }
+      ]
+    ],
+    "extra": {
+      "notice": "One shared MessMate API. No cloud build subscription required."
+    }
+  }
+}

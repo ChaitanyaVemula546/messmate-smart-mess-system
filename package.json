@@ -1,0 +1,43 @@
+{
+  "name": "messmate-smart-mess-system",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "concurrently -k -n api,web \"pnpm --filter @messmate/api dev\" \"pnpm --filter @messmate/web dev\"",
+    "db:migrate": "node --import tsx packages/database/src/migrate.ts",
+    "db:seed": "node --import tsx packages/database/src/seed.ts",
+    "typecheck": "pnpm -r typecheck && tsc --noEmit -p tsconfig.tools.json",
+    "lint": "eslint apps packages tests scripts --max-warnings=0",
+    "test": "vitest run",
+    "build": "pnpm --filter @messmate/api build && pnpm --filter @messmate/web build",
+    "mobile:check": "pnpm --filter @messmate/mobile typecheck",
+    "mobile:export": "pnpm --filter @messmate/mobile export",
+    "secrets:check": "node scripts/check-secrets.mjs",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css,mjs,json}\" \"packages/**/*.ts\" \"tests/**/*.ts\" \"scripts/*.{mjs,ts}\"",
+    "admin:bootstrap": "node --import tsx scripts/admin-bootstrap.ts",
+    "maintenance": "node --import tsx scripts/maintenance.ts",
+    "smoke": "node scripts/smoke.mjs",
+    "export": "node scripts/export.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "~5.9.3",
+    "tsx": "^4.20.0",
+    "vitest": "^3.2.4",
+    "eslint": "^9.39.0",
+    "typescript-eslint": "^8.46.0",
+    "concurrently": "^9.2.0",
+    "esbuild": "^0.25.0",
+    "bcryptjs": "^3.0.2",
+    "prettier": "^3.6.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.0"
+  },
+  "type": "module"
+}

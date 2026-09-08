@@ -1,0 +1,20 @@
+[Unit]
+Description=MessMate Next.js website
+After=network-online.target messmate-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=messmate
+Group=messmate
+WorkingDirectory=/opt/messmate/apps/web
+EnvironmentFile=/etc/messmate/web.env
+ExecStart=/usr/bin/node /opt/messmate/apps/web/node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
