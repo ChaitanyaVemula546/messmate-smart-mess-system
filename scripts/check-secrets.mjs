@@ -1,7 +1,16 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, relative } from "node:path";
+import { parse } from "dotenv";
 const root = process.cwd();
+const knownCredentials = existsSync(resolve(root, ".env"))
+  ? Object.entries(parse(readFileSync(resolve(root, ".env"))))
+      .filter(
+        ([key, value]) =>
+          /SECRET|PASSWORD|TOKEN/.test(key) && value.length >= 16,
+      )
+      .map(([, value]) => value)
+  : [];
 const ignored = new Set([
   "node_modules",
   ".git",
@@ -44,6 +53,9 @@ function inspect(name, bytes) {
   if (bytes.includes(0)) return;
   scanned++;
   const content = bytes.toString("utf8");
+  for (const value of knownCredentials)
+    if (content.includes(value))
+      flag(name, "configured private credential in source/history");
   for (const [kind, pattern] of patterns)
     if (pattern.test(content)) flag(name, kind);
   for (const match of content.matchAll(

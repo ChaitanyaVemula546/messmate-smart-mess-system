@@ -10,7 +10,7 @@ Install Node.js 22 or 24 and pnpm 11.19.0. From this directory:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm setup
+pnpm run setup
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
@@ -18,7 +18,9 @@ pnpm dev
 
 Open http://localhost:3000. The API runs on http://localhost:4000/api. Start commands can be run on Windows PowerShell as separate lines. Do not run database commands concurrently with an API process that owns the same PGlite directory: stop the API first.
 
-`pnpm setup` generates a private `.env` and `.demo-credentials.json`. Open the latter **locally** to read development login details. Never upload either file. Seed accounts use fictional `@messmate.local` email addresses. Seeding is explicit, refuses a nonempty user table, and is disabled in production. It creates 36 students and 35 completed days of sample history. Sample devices are disabled, and no cost/environment factors are invented. The sample data is for demonstration only.
+`pnpm run setup` generates a private `.env` and `.demo-credentials.json`. Open the latter **locally** to read development login details. Never upload either file. Seed accounts use fictional `@messmate.local` email addresses. Seeding is explicit, refuses a nonempty user table, and is disabled in production. It creates 36 students and 35 completed days of sample history. Sample devices are disabled, and no cost/environment factors are invented. The sample data is for demonstration only.
+
+The full [completion report](docs/FINAL_REPORT.md) covers all 25 requested delivery items. Executed checks and remaining manual work are in [verification](docs/VERIFICATION.md).
 
 ## What is included
 
@@ -89,7 +91,11 @@ Apply migrations to an empty PostgreSQL database, create a private administrator
 
 ## Source control
 
-Local Git is initialized with checkpoints. The project is not connected to a remote repository. Follow [GitHub upload instructions](docs/DEPLOYMENT.md#manual-private-github-upload); use a private repository named `messmate-smart-mess-system`. Credentials and development database files are excluded from the export.
+The build workspace has local Git checkpoints; the ZIP includes a source-history.bundle for restoring them. The project is not connected to a remote repository. Follow [GitHub upload instructions](docs/DEPLOYMENT.md#manual-private-github-upload); use a private repository named `messmate-smart-mess-system`. Credentials and development database files are excluded from the export.
+
+To recreate a source ZIP after changes, commit the source and run `pnpm export` (requires Git and Python 3).
+
+After a local build, `pnpm smoke:stack` starts both compiled servers, checks their connection and stops them. Stop other servers first when using the same PGlite directory.
 
 ## Honest limits
 

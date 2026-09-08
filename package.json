@@ -22,7 +22,8 @@
     "admin:bootstrap": "node --import tsx scripts/admin-bootstrap.ts",
     "maintenance": "node --import tsx scripts/maintenance.ts",
     "smoke": "node scripts/smoke.mjs",
-    "export": "node scripts/export.mjs"
+    "export": "node scripts/export.mjs",
+    "smoke:stack": "node scripts/smoke-stack.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

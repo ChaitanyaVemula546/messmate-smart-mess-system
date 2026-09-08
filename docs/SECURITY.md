@@ -14,8 +14,14 @@ SQL values are bound through Drizzle. CSV exports escape cells and prefix spread
 
 Use HTTPS for web/API/mobile/devices. Keep PostgreSQL private, use a least-privilege DB role, rotate credentials, back up data and apply package updates. `.env` and firmware private config files are ignored; `pnpm secrets:check` inspects working source and local Git history. This automated scan is a guard, not a guarantee that a production security assessment is unnecessary.
 
-No public default administrator credentials are included. `pnpm setup` creates random local credentials and `pnpm db:seed` uses them only for a development database. Production administrator creation reads a password from the process environment, never from committed source or command arguments.
+No public default administrator credentials are included. `pnpm run setup` creates random local credentials and `pnpm db:seed` uses them only for a development database. Production administrator creation reads a password from the process environment, never from committed source or command arguments.
 
 ## Known scope
 
 No multi-tenant isolation, email password recovery, MFA, push notifications or campus identity provider is implemented. Sessions do not silently refresh: students sign in after expiry. The application is source-complete for the documented single-campus flows, with production rollout, independent review and physical integration remaining deployment tasks.
+
+## Dependency review result
+
+Available Drizzle/PostCSS/qs/UUID fixes are included. Two high version-based image-size findings remain in pnpm audit. The committed pnpm patch disables the affected ICNS/HEIF/JXL parsers, and a regression test verifies rejection under a timeout. This is a targeted mitigation, not an audit-clean claim. See VERIFICATION.md for advisory identifiers and the upstream-update follow-up. No user-supplied image parsing endpoint exists in the API.
+
+New passwords are limited to 72 UTF-8 bytes so bcrypt cannot silently truncate them. Device status and credential rotation are rechecked while the ingestion transaction holds its device lock. Production startup requires an exact HTTPS browser origin. The source scanner also checks generated local credential values against source/Git objects without printing them.

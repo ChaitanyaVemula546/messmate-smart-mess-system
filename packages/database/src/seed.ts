@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === "production")
 const password = process.env.DEMO_PASSWORD;
 if (!password || password.length < 12)
   throw new Error(
-    "Run pnpm setup or supply a private DEMO_PASSWORD of at least 12 characters.",
+    "Run pnpm run setup or supply a private DEMO_PASSWORD of at least 12 characters.",
   );
 const db = await connect(process.env.DATABASE_URL ?? "pglite://.data/messmate");
 try {
