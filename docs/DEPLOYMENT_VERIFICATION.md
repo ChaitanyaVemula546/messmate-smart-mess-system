@@ -1,12 +1,12 @@
-# Deployment verification — 10 September 2026
+# Deployment verification — updated 11 September 2026
 
 ## Status
 
-**LIVE: public Vercel website and same-origin API connected to cloud PostgreSQL. GitHub automatic deployment is pending account access.**
+**LIVE: public Vercel website and same-origin API connected to cloud PostgreSQL. Source is pushed to private GitHub; automatic Vercel deployment is pending its GitHub connection.**
 
 Website: [https://messmate-smart-mess-system.vercel.app](https://messmate-smart-mess-system.vercel.app). API: [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api). Deployment `dpl_kP1a3XXPB3XhWBcymozRZTnwxrZJ` completed through Vercel CLI 59.14.0 on the verified Hobby plan, with an approximately 52-second production build. No paid service was enabled.
 
-The supplied folder had no `.git`; its history was restored from `source-history.bundle`, with all newer local UI/animation changes retained. `origin` now points to `https://github.com/ChaitanyaVemula546/messmate-smart-mess-system.git`. The GitHub connector still returns repository-not-found, local Git lacks credentials, and Vercel's GitHub login connection is missing. No source push or automatic Git deployment has occurred; direct CLI deployment is working.
+The supplied folder had no `.git`; its history was restored from `source-history.bundle`, with all newer local UI/animation changes retained. `origin` points to `https://github.com/ChaitanyaVemula546/messmate-smart-mess-system.git`. On 11 September, authenticated GitHub access verified that this repository is private and permits pushes. The remote was empty before publication. The production baseline was committed and pushed as `0e36665e342596afa61008c8c7e82366b626ac3d`, and `git ls-remote` confirmed the matching `main` SHA. All 51 staged file paths were reviewed, with zero private/build paths; the pre-push secret scan passed for 250 source/history text objects. Git author identity was configured only for this repository. Vercel's GitHub connection remains pending; direct CLI deployment is working.
 
 ## Public deployment checks
 
@@ -85,7 +85,7 @@ Before cloud configuration was available, using a separately started **compiled 
 
 ## Remaining limits
 
-GitHub push and automatic deployment remain blocked by account/repository authorization. The public site and API work independently of that integration. Access from a separate physical network, such as a phone on cellular data, has not been verified. Platform-specific lifecycle and forwarded-IP behavior have automated software coverage, but were not separately stress-tested across multiple live Vercel instances. `pnpm smoke:stack` requires an isolated cloud test database and private test accounts and was not run against the production database.
+The private GitHub source push is complete. Automatic Vercel deployment still needs the GitHub account/repository connection in the existing Vercel project's Git settings and a successful Git-triggered release. The public site and API work independently of that integration. Access from a separate physical network, such as a phone on cellular data, has not been verified. Platform-specific lifecycle and forwarded-IP behavior have automated software coverage, but were not separately stress-tested across multiple live Vercel instances. `pnpm smoke:stack` requires an isolated cloud test database and private test accounts and was not run against the production database.
 
 Real ESP32/R307/HX711 operation, TLS root trust on the devices, calibration, and native Expo installation were not tested. Simulated device requests successfully reached the production API and wrote controlled attendance/waste records. The existing hardware payloads and endpoint paths were preserved; both firmware configuration examples now use the production hostname. The Expo export was verified with the real public API URL, and the release guard refuses the Android emulator fallback outside development.
 

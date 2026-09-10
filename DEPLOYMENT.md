@@ -1,12 +1,12 @@
 # Deploy MessMate
 
-## Current status — 10 September 2026
+## Current status — 11 September 2026
 
 **LIVE ON VERCEL.** Open [MessMate](https://messmate-smart-mess-system.vercel.app). Its same-origin API is [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api), and the public health endpoint returns HTTP 200 with the cloud database connected. The public `pnpm deploy:check` and all 17 controlled live workflow checks passed, including student meal choices, mobile bearer sessions, fingerprint attendance and waste readings. Temporary test records were removed after verification. The first administrator has been created; read the login email and password locally in the ignored root file `.production-credentials.json`. Never upload or share that file.
 
 Deployment `dpl_kP1a3XXPB3XhWBcymozRZTnwxrZJ` completed on the verified Vercel Hobby plan, using a Neon pooled PostgreSQL connection over verified TLS. All three existing migrations were applied to the empty cloud database; no fictional demo data was seeded. No paid service or billing was enabled.
 
-**GitHub automatic deployment is pending account access.** Local Git history was restored from `source-history.bundle`, newer UI/Anime.js changes were preserved, and `origin` points to the [supplied repository](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system). GitHub still returns repository-not-found to the connected account, local Git has no credentials, and Vercel's GitHub login connection is missing. No source push or Git-triggered deployment has occurred. Direct CLI deployment works independently of GitHub.
+**Source pushed to private GitHub; Vercel automatic deployment is pending its GitHub connection.** Local Git history was restored from `source-history.bundle`, newer UI/Anime.js changes were preserved, and the verified production baseline was pushed to [ChaitanyaVemula546/messmate-smart-mess-system](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system) on `main`. Repository privacy and write access were verified. The remote matched baseline commit `0e36665e342596afa61008c8c7e82366b626ac3d` after the push. The existing Vercel deployment still uses the working direct CLI workflow; Git-triggered Vercel deployment is not configured yet.
 
 ## 1. Architecture
 
@@ -85,15 +85,15 @@ Do not add `JWT_SECRET`, a second API URL, or `DEVICE_API_SECRET`. Devices alrea
 
 ## 5. Private GitHub repository
 
-The supplied repository is [ChaitanyaVemula546/messmate-smart-mess-system](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system), and the local `origin` is already set to its HTTPS Git URL. Its contents and privacy setting cannot yet be verified because the connected GitHub account returns repository-not-found. Keep the repository private.
+The verified private repository is [ChaitanyaVemula546/messmate-smart-mess-system](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system), and the local `origin` uses its HTTPS Git URL. Authentication through Git Credential Manager works. The previously empty remote now contains the existing history and verified production source on `main`; no force-push was used. The pre-push source/history secret scan passed, and the staged paths excluded private environment files, credentials, `.vercel`, `.test-output` and local databases.
 
-To finish access and automatic deployment:
+To finish automatic Vercel deployment:
 
-1. In GitHub, open **Settings → Applications → Installed GitHub Apps**, configure the ChatGPT/Codex app, and grant access to `messmate-smart-mess-system`. If that app is not installed, connect GitHub through Codex and select this repository.
-2. In Vercel, connect the GitHub account when prompted. In the existing MessMate project, open **Settings → Git**, select this repository, and use `main` as the production branch. Authorize the Vercel GitHub app for this repository if requested.
-3. Sign in to GitHub for local Git, inspect the remote history, and reconcile any existing commits before pushing. Do not create another repository, replace `origin`, or force-push.
+1. In Vercel, connect the GitHub account when prompted. In the existing MessMate project, open **Settings → Git**, select `ChaitanyaVemula546/messmate-smart-mess-system`, and use `main` as the production branch.
+2. Authorize the Vercel GitHub app for this private repository if requested. Reuse the existing project and its production variables.
+3. Verify a subsequent push produces a Vercel deployment and run the public health check. Local Git access alone does not create the Vercel integration.
 
-After access works and remote history has been checked, review and upload the source from this folder:
+For future source updates, run the appropriate local checks, inspect/reconcile remote changes, then review and push from this folder:
 
 ```powershell
 git remote -v
@@ -101,8 +101,8 @@ pnpm secrets:check
 git status --short
 git add .
 git diff --cached --name-only
-git commit -m "Prepare existing MessMate for Vercel deployment"
-git push -u origin main
+git commit -m "Describe the verified change"
+git push origin main
 ```
 
 Review staged file names to ensure only source/configuration/docs are included. Never upload `.env.production.local`, `.production-credentials.json`, `.env`, or `.demo-credentials.json`.
@@ -217,6 +217,6 @@ Maintenance can be run manually using `node --env-file=.env.production.local --i
 
 ## 10. Verification limits
 
-The production build, automated software checks, local browser flows and public deployment checks are recorded in [deployment verification](docs/DEPLOYMENT_VERIFICATION.md). The public HTTPS site, serverless API, verified cloud database connection, secure sessions, controlled student/device writes and responsive admin browser flow passed. Mobile bearer API behavior and an Expo JavaScript export using the live API passed. GitHub push/automatic deployment, access from a separate physical network, native Expo installation and physical ESP32 operation remain unverified.
+The production build, automated software checks, local browser flows and public deployment checks are recorded in [deployment verification](docs/DEPLOYMENT_VERIFICATION.md). The public HTTPS site, serverless API, verified cloud database connection, secure sessions, controlled student/device writes and responsive admin browser flow passed. Mobile bearer API behavior, an Expo JavaScript export using the live API, and the private GitHub source push passed. Vercel automatic deployment from GitHub, access from a separate physical network, native Expo installation and physical ESP32 operation remain unverified.
 
 The workspace audit retains two version-based high alerts for Expo's `image-size` 1.2.1; the supplied patch disables the affected ICNS/JXL/HEIF parsers and the regression test passes. These are mobile build dependencies, not the Next.js API. The CSV parser was updated to the upstream patched release for [GHSA-8cw4-87c7-c6xx](https://github.com/advisories/GHSA-8cw4-87c7-c6xx). Do not suppress audit output or remove the existing patch.

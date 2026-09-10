@@ -4,7 +4,7 @@ Smart Attendance. Smarter Cooking. Less Waste.
 
 A smart hostel mess platform: **Next.js web + Expo student app + one Express API + PostgreSQL-compatible database**. All code is in this repository. Next.js now includes the existing API for a single Vercel deployment; local development still supports the separate API server. See the [production deployment guide](DEPLOYMENT.md) for cloud database and hosting setup.
 
-**Live:** [MessMate](https://messmate-smart-mess-system.vercel.app), with its API at [the same domain under `/api`](https://messmate-smart-mess-system.vercel.app/api). Public HTTPS checks and all 17 controlled live workflow checks passed on Vercel Hobby, including login, student meal choices and device API writes. Test records were cleaned up. GitHub automatic deployment is pending account access; direct CLI deployment works. See [deployment verification](docs/DEPLOYMENT_VERIFICATION.md) for the tested scope.
+**Live:** [MessMate](https://messmate-smart-mess-system.vercel.app), with its API at [the same domain under `/api`](https://messmate-smart-mess-system.vercel.app/api). Public HTTPS checks and all 17 controlled live workflow checks passed on Vercel Hobby, including login, student meal choices and device API writes. Test records were cleaned up. Source is pushed to the private GitHub repository; Vercel automatic deployment awaits its GitHub connection. Direct CLI deployment works. See [deployment verification](docs/DEPLOYMENT_VERIFICATION.md) for the tested scope.
 
 ## Start on your computer
 
@@ -97,7 +97,7 @@ The production app is live with Neon PostgreSQL, all three migrations applied, a
 
 ## Source control
 
-Local Git history has been restored from the supplied source-history.bundle while preserving newer UI changes. `origin` points to the [supplied GitHub repository](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system). Repository access and the Vercel GitHub connection are still missing, so no push or automatic deployment has occurred. Follow the [account access and upload instructions](DEPLOYMENT.md#5-private-github-repository). Credentials and development database files are excluded from the export.
+Local Git history has been restored from the supplied source-history.bundle while preserving newer UI changes. The verified deployment source has been pushed to `main` in the [private GitHub repository](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system), and the remote commit was confirmed. Private environment files, credentials and local databases were excluded. Complete the [Vercel GitHub connection](DEPLOYMENT.md#5-private-github-repository) to enable automatic deployment from future pushes.
 
 To recreate a source ZIP after changes, commit the source and run `pnpm export` (requires Git and Python 3).
 
