@@ -3,14 +3,52 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, relative } from "node:path";
 import { parse } from "dotenv";
 const root = process.cwd();
-const knownCredentials = existsSync(resolve(root, ".env"))
-  ? Object.entries(parse(readFileSync(resolve(root, ".env"))))
-      .filter(
-        ([key, value]) =>
-          /SECRET|PASSWORD|TOKEN/.test(key) && value.length >= 16,
-      )
-      .map(([, value]) => value)
-  : [];
+const knownCredentials = new Set();
+function rememberCredential(value) {
+  if (typeof value === "string" && value.length >= 16)
+    knownCredentials.add(value);
+}
+for (const entry of readdirSync(root, { withFileTypes: true })) {
+  if (
+    !entry.isFile() ||
+    !/^\.env(?:$|\.)/.test(entry.name) ||
+    entry.name === ".env.example"
+  )
+    continue;
+  for (const [key, value] of Object.entries(
+    parse(readFileSync(resolve(root, entry.name))),
+  )) {
+    if (/SECRET|PASSWORD|TOKEN/.test(key)) rememberCredential(value);
+    if (key === "DATABASE_URL") {
+      try {
+        const password = new URL(value).password;
+        if (password) {
+          rememberCredential(value);
+          rememberCredential(decodeURIComponent(password));
+        }
+      } catch {
+        // Invalid private URLs must never be echoed by the scanner.
+      }
+    }
+  }
+}
+function rememberPasswords(value) {
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+    if (/password/i.test(key)) rememberCredential(child);
+    rememberPasswords(child);
+  }
+}
+const productionCredentialsPath = resolve(root, ".production-credentials.json");
+if (existsSync(productionCredentialsPath)) {
+  try {
+    rememberPasswords(
+      JSON.parse(readFileSync(productionCredentialsPath, "utf8")),
+    );
+  } catch {
+    throw new Error("Unable to read production credentials (values omitted).");
+  }
+}
 const ignored = new Set([
   "node_modules",
   ".git",
@@ -25,7 +63,7 @@ const ignored = new Set([
 ]);
 const privateName = (name) =>
   (/(^|\/)\.env(?:$|\.)/.test(name) && !name.endsWith(".env.example")) ||
-  /(^|\/)(\.demo-credentials\.json|config\.h)$/.test(name) ||
+  /(^|\/)(\.(?:demo|production)-credentials\.json|config\.h)$/.test(name) ||
   /\.(keystore|jks|pem|key)$/.test(name);
 const patterns = [
   ["private key", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],

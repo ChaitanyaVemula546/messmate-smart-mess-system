@@ -1,7 +1,8 @@
 "use client";
 import type { ReactNode } from "react";
 import { Download, RefreshCw } from "lucide-react";
-import { Button, ErrorBox } from "./ui";
+import { Button, ErrorBox, SuccessBox } from "./ui";
+import { MotionWords } from "./motion";
 export function Heading({
   title,
   description,
@@ -15,7 +16,9 @@ export function Heading({
     <div className="page-heading between">
       <div>
         <span className="eyebrow">Campus dining · Asia/Kolkata</span>
-        <h1>{title}</h1>
+        <h1>
+          <MotionWords text={title} />
+        </h1>
         <p>{description}</p>
       </div>
       <div className="row no-print">{actions}</div>
@@ -30,11 +33,7 @@ export function Feedback({
   return (
     <>
       {action.error && <ErrorBox message={action.error} />}{" "}
-      {action.message && (
-        <div className="notice" role="status">
-          {action.message}
-        </div>
-      )}
+      {action.message && <SuccessBox message={action.message} />}
     </>
   );
 }

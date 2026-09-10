@@ -27,6 +27,46 @@ The connected smoke check is reproducible with `pnpm smoke:stack` after setup, m
 
 The compiled API smoke used development PGlite, while the website used its production build. Production PostgreSQL/TLS operation remains a deployment verification task. No production deployment or public preview URL was created.
 
+## Frontend animation verification (9 September 2026)
+
+After integrating Anime.js 4.5.0 into the existing frontend, web TypeScript, workspace lint (zero warnings), and the production Next.js build passed. The automated suite again passed **32 tests**. The animation update does not change backend routes, authentication, database schema, or native mobile code.
+
+Chromium browser verification through Playwright passed **12 grouped workflow checks with zero JavaScript errors**, using the running website and API against an isolated seeded PGlite database. The user's existing development database and configuration were not changed. Checks covered:
+
+- Landing page, administrator sign-in, dashboard rendering and exact final KPI values.
+- Meal tabs, arrow-key navigation, the existing meal query and attendance refresh.
+- Fingerprint assignment pending feedback, duplicate-ID rejection, disabled submit and error feedback.
+- Actual scanner API responses: an unmapped ID (404), an off-window scan (409), and recorded attendance (200). The website displayed the latest reported scanner result from the existing Devices API. A meal window was opened only in the isolated verification database to exercise successful attendance.
+- Waste, money-saved and environmental-impact counters, including final values and units in print.
+- A 390px viewport: sidebar opening/closing, meal navigation and no page-level horizontal overflow.
+- Reduced-motion preference: static final counters and no panel transform/opacity animation.
+- Student sign-in, the same recorded fingerprint attendance, saving a meal preference, history and sign-out.
+
+Desktop dashboard, scanner rejection and mobile attendance screenshots were also inspected. This supersedes the initial browser-preview access limitation. These checks simulate scanner HTTP requests; they do not verify a connected physical fingerprint sensor. Scanner status is the latest reported result, refreshed every 20 seconds, rather than a live hardware event stream. Sensor-local no-match events that never reach the API cannot appear on the website.
+
+## Expanded animation verification (10 September 2026)
+
+The second animation pass passed web TypeScript, production Next.js build, and workspace lint. **17 grouped Chromium workflow checks passed with zero JavaScript errors**, again using an isolated seeded PGlite database and the real API. The agent-browser daemon was unavailable in this environment, so Playwright controlled the local Chromium browser for verification.
+
+The executed checks covered the landing timeline and replay; final SVG visibility after cleanup; usable landing content without JavaScript; enabling reduced motion during an active timeline; desktop pointer lighting/tilt; final chart curve and bar geometry; administrator sign-in and exact KPI values; rapid meal switching and keyboard navigation; duplicate fingerprint assignment, pending states and centered dialogs; real 404 and 409 scanner rejections followed by recorded attendance; report values and print formatting; 390px sidebar/tab layout; static reduced-motion counters/panels; student sign-in, preference save, history and sign-out; and the mobile landing page. The test changed a meal window only in its isolated database to exercise a successful scanner request.
+
+Desktop landing/dashboard and mobile attendance screenshots were inspected, and a short landing-motion preview was recorded. No real device was connected. This pass changes frontend components/styles only; the earlier 32-test backend/domain/dependency suite remains the recorded regression baseline and was not rerun for this presentation-only pass.
+
+## Repeat-on-scroll verification (10 September 2026)
+
+The third animation pass passed web TypeScript, workspace lint with zero warnings, and the production Next.js build. **19 grouped Chromium workflow checks passed with zero JavaScript errors**, using the real website/API with a new isolated PGlite database. Playwright controlled local Chromium because the agent-browser daemon was unavailable.
+
+The scroll-specific checks confirmed:
+
+- The hero illustration and heading replayed on two return visits. Eight rapid exits/returns finished with complete SVG strokes and no residual transforms.
+- Dashboard cards, counters showing actual API values, chart curves and table rows each replayed on two return visits. Small scroll movements while targets remained visible did not restart their animations.
+- Mobile feature cards replayed individually at a 390px viewport without horizontal overflow. Repeated scrolling with reduced motion enabled produced no SVG or section animation.
+- Switching to reduced motion during an active illustration restored fully drawn shapes and disabled the replay button. Landing content remained usable with JavaScript disabled.
+
+The same run also verified administrator/student sign-in, exact final counters and print values, rapid meal-tab switching and keyboard navigation, mobile navigation, pending fingerprint assignment and duplicate rejection, an actual unmapped scanner request (404), successful scanner attendance (200) displayed under its returned date and meal, a saved student preference, history and sign-out. The real API's meal response was used for verification; the test did not assume every successful scan belonged to Lunch. No physical scanner was connected.
+
+Desktop/mobile screenshots were inspected and a 13-second scrolling preview was recorded. Source/Git secret scanning passed before packaging. The change is confined to frontend presentation and its documentation; the earlier 32-test backend/domain/dependency suite was not rerun for this pass. The update ZIP is cumulative and can be merged into the existing project without setup, seeding or database changes.
+
 ## What the automated suite verifies
 
 24 API/database tests cover public database health, authentication, safe cookies, native sessions, origin/header attacks, roles and ownership; mobile writes reflected in web reads; preference upsert/cutoffs; valid, invalid, unmapped, duplicate, off-window and disabled fingerprint scenarios; eight concurrent scans producing exactly one arrival; duplicate fingerprint assignment; waste capacity/identity/JSON errors, disabled/unknown credentials, rotation, measurement retries/conflicts, repeated/lower snapshots, tare and out-of-window attribution; measured dashboard totals; assumptions/preparation/report persistence; student deactivation and session revocation; historical CSV imports/errors/duplicates/null times; manual attendance/audit; demo prediction generation/evaluation; logout and expiry.
@@ -50,9 +90,11 @@ On the seeded local PGlite demonstration, eight sequential authenticated 36-day 
 
 ## Remaining manual verification
 
+Fingerprint local-network update, **9 September 2026**: the host C++ transport-policy test passed **102 checks**, covering the explicit HTTP opt-in, private IPv4 boundaries, malformed origins, URL credentials, unexpected paths, port validation and HTTPS defaults. Reproduce with `g++ -std=c++11 -Wall -Wextra -Werror -pedantic tests/firmware-transport.test.cpp -o /tmp/messmate-firmware-policy` followed by `/tmp/messmate-firmware-policy`. This compiles only the portable transport policy, not the Arduino sketch.
+
 | Area | Status / required verification |
 |---|---|
-| Browser/UI | The available browser could not open this environment's local preview (ERR_BLOCKED_BY_CLIENT). Inspect landing/login/admin/student screens, forms, table scrolling, charts, mobile viewport and console in a local browser. |
+| Browser/UI | Core connected flows and animation behavior passed in Chromium, including a 390px viewport and reduced motion. Complete campus acceptance across target browsers, real phones and operational settings using the checklist below. |
 | Native app | No Android emulator/SDK or connected phone was available. Verify SecureStore, splash, login/restore/expiry/logout, touch navigation, foreground/pull refresh and the API address on a real device. |
 | APK / iOS | No APK/IPA was built. Expo export is JavaScript/assets only. Local native builds need Android SDK/JDK or macOS/Xcode and signing configuration. |
 | ESP32 fingerprint | **SOFTWARE VERIFIED; REQUIRES PHYSICAL HARDWARE VERIFICATION.** Compile with Arduino libraries, confirm power/UART/enrollment/TLS, then test actual scans and duplicate behavior. |

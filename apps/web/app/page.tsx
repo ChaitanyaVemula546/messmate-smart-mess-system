@@ -8,11 +8,12 @@ import {
   ShieldCheck,
   Leaf,
   ArrowRight,
-  CalendarCheck,
   Database,
   Smartphone,
 } from "lucide-react";
 import { Logo } from "../components/ui";
+import { MealJourney } from "../components/landing-motion";
+import { MotionWords } from "../components/motion";
 export default function Home() {
   return (
     <>
@@ -35,11 +36,13 @@ export default function Home() {
               Thoughtful dining. Connected campus.
             </span>
             <h1 className="serif">
-              Every meal
+              <MotionWords text="Every meal" />
               <br />
-              counts.
+              <MotionWords text="counts." />
               <br />
-              <em>Make it matter.</em>
+              <em>
+                <MotionWords text="Make it matter." />
+              </em>
             </h1>
             <p>
               Smart Attendance. Smarter Cooking. Less Waste. Give your mess team
@@ -57,60 +60,7 @@ export default function Home() {
               <ShieldCheck size={15} /> One connected system for your campus
             </div>
           </div>
-          <div
-            className="hero-art"
-            aria-label="Meal planning, attendance and food waste are connected"
-          >
-            <div
-              className="eyebrow"
-              style={{ marginBottom: 27, position: "relative" }}
-            >
-              A better meal starts with a plan
-            </div>
-            {[
-              [
-                CalendarCheck,
-                "01",
-                "Plan the meal",
-                "Students share their plans.",
-              ],
-              [
-                Fingerprint,
-                "02",
-                "Know who arrived",
-                "Fingerprint check-ins verify attendance.",
-              ],
-              [
-                Scale,
-                "03",
-                "Measure what remains",
-                "The waste station closes the loop.",
-              ],
-            ].map(([Icon, n, title, body]) => {
-              const C = Icon as typeof Scale;
-              return (
-                <div className="flow-tile" key={String(n)}>
-                  <span className="number">{String(n)}</span>
-                  <div>
-                    <strong>{String(title)}</strong>
-                    <small>{String(body)}</small>
-                  </div>
-                  <C size={23} style={{ marginLeft: "auto", flexShrink: 0 }} />
-                </div>
-              );
-            })}
-            <div
-              className="row"
-              style={{
-                position: "relative",
-                marginTop: 28,
-                fontSize: 11,
-                color: "#57704d",
-              }}
-            >
-              <Leaf size={15} /> Better information. More considered cooking.
-            </div>
-          </div>
+          <MealJourney />
         </section>
         <section className="dark-section" id="how-it-works">
           <div className="public-section">
@@ -118,7 +68,7 @@ export default function Home() {
               From intention to insight
             </span>
             <h2 className="serif" style={{ marginTop: 15 }}>
-              A single picture of every meal.
+              <MotionWords text="A single picture of every meal." />
             </h2>
             <p className="muted">
               Connect your student portal, dining hall and kitchen with one
@@ -159,9 +109,9 @@ export default function Home() {
             <div>
               <span className="eyebrow">Built for the whole campus</span>
               <h2 className="serif" style={{ marginTop: 14 }}>
-                Less guesswork.
+                <MotionWords text="Less guesswork." />
                 <br />
-                More informed decisions.
+                <MotionWords text="More informed decisions." />
               </h2>
             </div>
             <p className="muted" style={{ maxWidth: 410 }}>

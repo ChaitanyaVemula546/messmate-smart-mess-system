@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { MotionEffects } from "../components/motion";
 export const metadata: Metadata = {
   title: "MessMate | Smart campus dining",
   description:
@@ -12,7 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <MotionEffects />
+      </body>
     </html>
   );
 }

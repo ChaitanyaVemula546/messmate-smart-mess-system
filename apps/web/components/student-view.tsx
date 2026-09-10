@@ -6,6 +6,30 @@ import { Shell } from "./shell";
 import { api, useRemote, useAction } from "./hooks";
 import { Heading, Feedback, Retry } from "./admin-common";
 import { Button, Loading, Badge, Table, Pager, timestamp } from "./ui";
+import { useEntrance } from "./motion";
+
+function AttendanceBadge({ present }: { present: boolean }) {
+  const ref = useEntrance<HTMLSpanElement>(
+    present,
+    present ? "success" : "panel",
+  );
+  return (
+    <span ref={ref} className="attendance-badge">
+      <Badge tone={present ? "" : "neutral"}>
+        {present ? (
+          <>
+            <span data-success-icon aria-hidden="true">
+              <Check size={12} />
+            </span>
+            CHECKED IN
+          </>
+        ) : (
+          "NO CHECK-IN"
+        )}
+      </Badge>
+    </span>
+  );
+}
 export function StudentView({ section }: { section: string }) {
   return (
     <Shell area="student">
@@ -103,16 +127,7 @@ function Meals() {
                 <small>
                   {m.response ? "Preference saved" : "No response yet"}
                 </small>
-                <Badge tone={m.present ? "" : "neutral"}>
-                  {m.present ? (
-                    <>
-                      <Check size={12} />
-                      CHECKED IN
-                    </>
-                  ) : (
-                    "NO CHECK-IN"
-                  )}
-                </Badge>
+                <AttendanceBadge present={m.present} />
               </div>
             </section>
           );

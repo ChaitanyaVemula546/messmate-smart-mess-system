@@ -11,7 +11,28 @@ import { createApiClient, ApiError } from "@messmate/api-client";
 import type { User } from "@messmate/types";
 const KEY = "messmate.session";
 export const API_BASE =
-  process.env.EXPO_PUBLIC_API_BASE_URL || "http://10.0.2.2:4000/api";
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (__DEV__ ? "http://10.0.2.2:4000/api" : "");
+if (!__DEV__) {
+  let productionUrl: URL;
+  try {
+    productionUrl = new URL(API_BASE);
+  } catch {
+    throw new Error(
+      "Set EXPO_PUBLIC_API_BASE_URL before building the mobile release.",
+    );
+  }
+  if (
+    productionUrl.protocol !== "https:" ||
+    !productionUrl.hostname.includes(".") ||
+    /(?:^localhost$|\.localhost$|\.local$|^[\d.]+$|:)/i.test(
+      productionUrl.hostname,
+    ) ||
+    productionUrl.username ||
+    productionUrl.password
+  )
+    throw new Error("Mobile releases require a public HTTPS API hostname.");
+}
 export const api = createApiClient(API_BASE, () =>
   SecureStore.getItemAsync(KEY),
 );

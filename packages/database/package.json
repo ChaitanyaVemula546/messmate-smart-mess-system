@@ -11,11 +11,12 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.14",
-    "drizzle-orm": "^0.45.2",
-    "pg": "^8.16.0",
+    "@messmate/shared": "workspace:*",
+    "@vercel/functions": "^3.9.6",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.6.0",
-    "@messmate/shared": "workspace:*"
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@types/pg": "^8.15.0"

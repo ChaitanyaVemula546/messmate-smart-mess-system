@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import type { MetricRow, Settings } from "@messmate/types";
 import { summarize } from "@messmate/shared";
+import { useChartEntrance } from "./chart-motion";
 export function Trend({
   rows,
   kind = "attendance",
@@ -41,8 +42,9 @@ export function Trend({
       Accuracy: settings ? summarize(group, settings).accuracy : null,
     };
   });
+  const motionRef = useChartEntrance(JSON.stringify(data) + kind);
   return (
-    <div className="chart" aria-label={kind + " trend"}>
+    <div className="chart" aria-label={kind + " trend"} ref={motionRef}>
       <ResponsiveContainer width="100%" height="100%">
         {kind === "waste" ? (
           <AreaChart data={data}>
@@ -65,6 +67,7 @@ export function Trend({
             />
             <Tooltip />
             <Area
+              isAnimationActive={false}
               dataKey="Waste"
               name="Waste (kg)"
               stroke="#688455"
@@ -79,6 +82,7 @@ export function Trend({
             <YAxis tick={{ fontSize: 10 }} width={35} />
             <Tooltip />
             <Line
+              isAnimationActive={false}
               dataKey={kind === "savings" ? "Savings" : "Accuracy"}
               stroke="#327352"
               strokeWidth={2}
@@ -107,12 +111,14 @@ export function Trend({
             <Tooltip cursor={{ fill: "#f1f5e9" }} />
             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 12 }} />
             <Bar
+              isAnimationActive={false}
               dataKey={kind === "prediction" ? "Predicted" : "Expected"}
               fill="#c8d6ae"
               radius={[3, 3, 0, 0]}
               maxBarSize={18}
             />
             <Bar
+              isAnimationActive={false}
               dataKey="Actual"
               fill="#357556"
               radius={[3, 3, 0, 0]}
@@ -134,8 +140,9 @@ export function MealChart({ rows }: { rows: MetricRow[] }) {
       .filter((r) => r.meal === meal)
       .reduce((n, r) => n + r.actual, 0),
   }));
+  const motionRef = useChartEntrance(JSON.stringify(data), true);
   return (
-    <div className="chart small">
+    <div className="chart small chart-horizontal" ref={motionRef}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical">
           <XAxis type="number" tick={{ fontSize: 10 }} />
@@ -146,8 +153,18 @@ export function MealChart({ rows }: { rows: MetricRow[] }) {
             width={66}
           />
           <Tooltip />
-          <Bar dataKey="Expected" fill="#cedbb6" radius={[0, 3, 3, 0]} />
-          <Bar dataKey="Actual" fill="#407957" radius={[0, 3, 3, 0]} />
+          <Bar
+            isAnimationActive={false}
+            dataKey="Expected"
+            fill="#cedbb6"
+            radius={[0, 3, 3, 0]}
+          />
+          <Bar
+            isAnimationActive={false}
+            dataKey="Actual"
+            fill="#407957"
+            radius={[0, 3, 3, 0]}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

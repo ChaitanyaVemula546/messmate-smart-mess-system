@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
+import { isIP } from "node:net";
 import { compare, hashSync } from "bcryptjs";
 import type { Request, RequestHandler, Express } from "express";
 import { sql } from "@messmate/database";
@@ -9,6 +10,13 @@ export const tokenHash = (token: string, secret: string) =>
   createHmac("sha256", secret).update(token).digest("hex");
 export const newToken = () => randomBytes(32).toString("base64url");
 export const cookieName = "messmate_session";
+export function clientAddress(req: Request, vercel = false) {
+  // Trust only the header overwritten by Vercel, and only on that platform.
+  const forwarded = req.headers["x-vercel-forwarded-for"];
+  if (vercel && typeof forwarded === "string" && isIP(forwarded.trim()))
+    return forwarded.trim();
+  return req.socket.remoteAddress ?? "unknown";
+}
 export function sessionToken(req: Request) {
   const bearer = req.headers.authorization?.match(
     /^Bearer ([A-Za-z0-9_-]{40,100})$/,
@@ -108,11 +116,12 @@ export function security(ctx: Context) {
           );
           res.on("finish", () => {
             const result = res.locals.deviceResult as string | undefined;
-            ctx.db
+            const update = ctx.db
               .query(
                 sql`UPDATE devices SET last_result=${result ?? String(res.statusCode)} WHERE id=${d.id}`,
               )
               .catch(() => {});
+            ctx.waitUntil?.(update);
           });
         })(),
       ).then(() => next(), next);
@@ -134,7 +143,7 @@ export function security(ctx: Context) {
         const input = login.parse(req.body);
         await limit(
           "login-source:" +
-            tokenHash(req.socket.remoteAddress ?? "unknown", ctx.secret),
+            tokenHash(clientAddress(req, ctx.vercel), ctx.secret),
           60,
           60,
         );

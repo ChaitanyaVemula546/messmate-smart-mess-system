@@ -4,8 +4,9 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { X, Leaf, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Leaf, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { AnimatedMetric, useEntrance, usePointerSurface } from "./motion";
 export const cn = (...v: ClassValue[]) => twMerge(clsx(v));
 const buttonVariants = cva("btn", {
   variants: {
@@ -84,11 +85,12 @@ export function Modal({
   description?: string;
   children: ReactNode;
 }) {
+  const dialogRef = useEntrance<HTMLDivElement>(open, "dialog");
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="overlay" />
-        <DialogPrimitive.Content className="dialog">
+        <DialogPrimitive.Content className="dialog" ref={dialogRef}>
           <DialogPrimitive.Title asChild>
             <h2>{title}</h2>
           </DialogPrimitive.Title>
@@ -112,9 +114,21 @@ export function Empty({
   return <div className="empty">{text}</div>;
 }
 export function ErrorBox({ message }: { message: string }) {
+  const ref = useEntrance<HTMLDivElement>(message, "error");
   return (
-    <div role="alert" className="error">
+    <div role="alert" className="error" ref={ref}>
       {message}
+    </div>
+  );
+}
+export function SuccessBox({ message }: { message: string }) {
+  const ref = useEntrance<HTMLDivElement>(message, "success");
+  return (
+    <div className="notice success-feedback" role="status" ref={ref}>
+      <span data-success-icon aria-hidden="true">
+        <CheckCircle2 size={18} />
+      </span>
+      <span>{message}</span>
     </div>
   );
 }
@@ -133,6 +147,17 @@ export function Table<T extends object>({
   rows: T[];
   columns: { key: string; label: string; render?: (row: T) => ReactNode }[];
 }) {
+  const rowKey = rows
+    .map((row, index) =>
+      String(
+        (row as Record<string, unknown>).id ??
+          (row as Record<string, unknown>).student_uuid ??
+          (row as Record<string, unknown>).meal ??
+          index,
+      ),
+    )
+    .join("|");
+  const bodyRef = useEntrance<HTMLTableSectionElement>(rowKey, "rows");
   if (!rows.length) return <Empty />;
   return (
     <div className="table-wrap">
@@ -146,7 +171,7 @@ export function Table<T extends object>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={bodyRef}>
           {rows.map((row, i) => (
             <tr key={String((row as Record<string, unknown>).id ?? i)}>
               {columns.map((c) => (
@@ -228,14 +253,20 @@ export function Kpi({
   note?: string;
   icon?: ReactNode;
 }) {
+  const surfaceRef = usePointerSurface();
   return (
-    <div className="card kpi">
-      <div className="kpi-label">
-        {label}
-        {icon}
+    <div className="card kpi" ref={surfaceRef}>
+      <div className="kpi-surface">
+        <div className="kpi-label">
+          {label}
+          {icon}
+        </div>
+        <div className="kpi-value">
+          <AnimatedMetric value={value} />
+        </div>
+        <div className="kpi-note">{note ?? "From recorded activity"}</div>
+        <span className="kpi-accent" aria-hidden="true" />
       </div>
-      <div className="kpi-value">{value}</div>
-      <div className="kpi-note">{note ?? "From recorded activity"}</div>
     </div>
   );
 }

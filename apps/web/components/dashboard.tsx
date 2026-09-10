@@ -14,6 +14,7 @@ import { useRemote } from "./hooks";
 import { Kpi, Loading, Badge, number, Table } from "./ui";
 import { Heading, Retry } from "./admin-common";
 import { Trend, MealChart } from "./charts";
+import { AnimatedNumber } from "./motion";
 export function Dashboard() {
   const { data, error, loading, reload } = useRemote<Data>(
     "/admin/dashboard",
@@ -54,9 +55,11 @@ export function Dashboard() {
           label="Measured waste"
           value={
             <>
-              {data.today.some((r) => r.has_waste)
-                ? number(today.wasteKg, 2)
-                : "—"}{" "}
+              {data.today.some((r) => r.has_waste) ? (
+                <AnimatedNumber value={today.wasteKg} digits={2} />
+              ) : (
+                "—"
+              )}{" "}
               <small style={{ fontSize: 15 }}>kg</small>
             </>
           }
@@ -106,7 +109,7 @@ export function Dashboard() {
             <>
               <div className="between">
                 <strong style={{ fontSize: 30 }}>
-                  {meal.actual}
+                  <AnimatedNumber value={meal.actual} />
                   <span
                     className="muted"
                     style={{ fontSize: 14, fontWeight: 400 }}
@@ -129,11 +132,17 @@ export function Dashboard() {
               <div className="metric-list">
                 <div>
                   <span>Remaining expected count</span>
-                  <strong>{Math.max(0, meal.expected - meal.actual)}</strong>
+                  <strong>
+                    <AnimatedNumber
+                      value={Math.max(0, meal.expected - meal.actual)}
+                    />
+                  </strong>
                 </div>
                 <div>
                   <span>Waste recorded</span>
-                  <strong>{number(meal.waste_kg, 2)} kg</strong>
+                  <strong>
+                    <AnimatedNumber value={meal.waste_kg} digits={2} /> kg
+                  </strong>
                 </div>
               </div>
             </>

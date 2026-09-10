@@ -9,25 +9,27 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@messmate/api": "workspace:*",
     "@messmate/api-client": "workspace:*",
-    "@messmate/types": "workspace:*",
     "@messmate/shared": "workspace:*",
+    "@messmate/types": "workspace:*",
     "@messmate/validation": "workspace:*",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.3",
+    "animejs": "^4.5.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
     "next": "16.3.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "lucide-react": "^0.468.0",
     "recharts": "^3.3.0",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-slot": "^1.2.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.0",
-    "@tailwindcss/postcss": "^4.1.0"
+    "tailwindcss": "^4.1.0"
   }
 }

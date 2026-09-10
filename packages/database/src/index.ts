@@ -1,6 +1,6 @@
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle as pgliteDrizzle } from "drizzle-orm/pglite";
 import { drizzle as pgDrizzle } from "drizzle-orm/node-postgres";
+import { attachDatabasePool } from "@vercel/functions";
+import { databasePoolOptions } from "./config";
 import pg from "pg";
 import { sql, type SQL } from "drizzle-orm";
 import { existsSync, readFileSync, readdirSync, mkdirSync } from "node:fs";
@@ -8,6 +8,7 @@ import { resolve, dirname } from "node:path";
 import dotenv from "dotenv";
 import * as schema from "./schema";
 export { sql };
+export { isLocalHostname } from "./config";
 export * as schema from "./schema";
 export interface Database {
   query<T = Record<string, unknown>>(q: SQL): Promise<T[]>;
@@ -42,6 +43,10 @@ export async function connect(url: string): Promise<Database> {
   if (url.startsWith("pglite://") || url === "memory://") {
     if (process.env.NODE_ENV === "production")
       throw new Error("Production requires PostgreSQL.");
+    const [{ PGlite }, { drizzle: pgliteDrizzle }] = await Promise.all([
+      import("@electric-sql/pglite"),
+      import("drizzle-orm/pglite"),
+    ]);
     const dir =
       url === "memory://" ? undefined : resolve(rootPath(), url.slice(9));
     if (dir) mkdirSync(dir, { recursive: true });
@@ -67,11 +72,11 @@ export async function connect(url: string): Promise<Database> {
   }
   if (!/^postgres(ql)?:\/\//.test(url))
     throw new Error("DATABASE_URL must be PostgreSQL or pglite://");
-  const pool = new pg.Pool({
-    connectionString: url,
-    max: 10,
-    connectionTimeoutMillis: 10000,
+  const pool = new pg.Pool(databasePoolOptions(url));
+  pool.on("error", () => {
+    console.error(JSON.stringify({ event: "database_pool_error" }));
   });
+  if (process.env.VERCEL === "1") attachDatabasePool(pool);
   const db = pgDrizzle(pool, { schema });
   return adapter(
     (q) => db.execute(q),

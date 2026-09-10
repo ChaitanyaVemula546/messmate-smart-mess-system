@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 const web = process.env.SMOKE_WEB_ORIGIN || "http://localhost:3000";
 const api = process.env.SMOKE_API_ORIGIN || "http://localhost:4000";
-const credentials = JSON.parse(readFileSync(".demo-credentials.json", "utf8"));
+const requestOrigin = process.env.SMOKE_REQUEST_ORIGIN || web;
+const credentials = process.env.SMOKE_PASSWORD
+  ? {
+      admin: process.env.SMOKE_ADMIN_EMAIL,
+      student: process.env.SMOKE_STUDENT_EMAIL,
+      password: process.env.SMOKE_PASSWORD,
+    }
+  : JSON.parse(readFileSync(".demo-credentials.json", "utf8"));
 const pages = [
   "/",
   "/login",
@@ -33,7 +40,9 @@ async function login(email, native) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(native ? { "X-Messmate-Client": "mobile" } : { Origin: web }),
+      ...(native
+        ? { "X-Messmate-Client": "mobile" }
+        : { Origin: requestOrigin }),
     },
     body: JSON.stringify({ email, password: credentials.password }),
   });
@@ -126,7 +135,7 @@ for (const session of [admin, student])
   await fetch(web + "/api/auth/logout", {
     method: "POST",
     headers: {
-      Origin: web,
+      Origin: requestOrigin,
       Cookie: session.cookie,
       "Content-Type": "application/json",
     },

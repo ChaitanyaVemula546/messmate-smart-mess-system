@@ -22,6 +22,7 @@ import {
 import type { User } from "@messmate/types";
 import { useRemote, api } from "./hooks";
 import { Logo, Loading, ErrorBox, Button, Badge } from "./ui";
+import { useEntrance, useSelectionIndicator } from "./motion";
 const adminNav = [
   ["dashboard", "Overview", LayoutDashboard],
   ["attendance", "Attendance", ClipboardList],
@@ -49,7 +50,13 @@ export function Shell({
   const { data: u, error, loading } = useRemote<User>("/auth/session"),
     [open, setOpen] = useState(false),
     [logoutError, setLogoutError] = useState("");
-  const path = usePathname();
+  const path = usePathname() ?? "";
+  const navRef = useEntrance<HTMLElement>(`${open}-${loading}`, "navigation");
+  useSelectionIndicator(
+    navRef,
+    `${path}-${loading}-${open}`,
+    '[aria-current="page"]',
+  );
   if (loading)
     return (
       <div className="content">
@@ -94,14 +101,18 @@ export function Shell({
           style={{ zIndex: 45 }}
         />
       )}
-      <aside className={"sidebar " + (open ? "open" : "")}>
+      <aside
+        id="campus-navigation"
+        className={"sidebar " + (open ? "open" : "")}
+      >
         <Link href="/">
           <Logo />
         </Link>
         <span className="label">
           {area === "admin" ? "CAMPUS OPERATIONS" : "STUDENT PORTAL"}
         </span>
-        <nav aria-label="Main navigation">
+        <nav aria-label="Main navigation" ref={navRef}>
+          <span className="selection-indicator" aria-hidden="true" />
           {nav
             .filter(([key]) => key !== "audit-logs" || u.role === "ADMIN")
             .map(([key, label, Icon]) => (
@@ -109,6 +120,12 @@ export function Shell({
                 key={key}
                 href={`/${area}/${key}`}
                 onClick={() => setOpen(false)}
+                aria-current={
+                  path === `/${area}/${key}` ||
+                  (key === "settings" && path.includes("/settings/"))
+                    ? "page"
+                    : undefined
+                }
                 className={
                   path === `/${area}/${key}` ||
                   (key === "settings" && path.includes("/settings/"))
@@ -135,6 +152,8 @@ export function Shell({
               variant="ghost"
               className="mobile-menu"
               aria-label="Open navigation"
+              aria-expanded={open}
+              aria-controls="campus-navigation"
               onClick={() => setOpen(!open)}
             >
               {open ? <X size={20} /> : <Menu size={20} />}

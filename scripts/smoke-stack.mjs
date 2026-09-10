@@ -1,61 +1,76 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, createWriteStream } from "node:fs";
 import { resolve } from "node:path";
+import dotenv from "dotenv";
+
+// Check the compiled single-process deployment against a configured cloud DB.
+// Use test accounts in an isolated cloud database, never the laptop PGlite data.
+dotenv.config({ path: resolve(".env.production.local") });
+if (
+  !process.env.DATABASE_URL ||
+  !process.env.AUTH_SECRET ||
+  !process.env.APP_URL
+)
+  throw new Error(
+    "Configure DATABASE_URL, AUTH_SECRET and APP_URL privately in .env.production.local first.",
+  );
+if (
+  !process.env.SMOKE_ADMIN_EMAIL ||
+  !process.env.SMOKE_STUDENT_EMAIL ||
+  !process.env.SMOKE_PASSWORD
+)
+  throw new Error(
+    "Set SMOKE_ADMIN_EMAIL, SMOKE_STUDENT_EMAIL and SMOKE_PASSWORD for test accounts in the same isolated cloud database.",
+  );
 mkdirSync(".test-output", { recursive: true });
-function start(args, cwd, name, extra = {}) {
-  const log = createWriteStream(resolve(".test-output", name + ".log"));
-  const child = spawn(process.execPath, args, {
-    cwd,
-    env: { ...process.env, ...extra },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  child.stdout.pipe(log);
-  child.stderr.pipe(log);
-  return child;
-}
-const api = start(
-  [resolve("apps/api/dist/server.js")],
-  process.cwd(),
-  "api-runtime",
-);
-const web = start(
+const log = createWriteStream(resolve(".test-output/web-runtime.log"));
+const port = process.env.SMOKE_PORT || "3100";
+const web = spawn(
+  process.execPath,
   [
     resolve("apps/web/node_modules/next/dist/bin/next"),
     "start",
     "-H",
     "127.0.0.1",
     "-p",
-    "3000",
+    port,
   ],
-  resolve("apps/web"),
-  "web-runtime",
-  { NODE_ENV: "production" },
+  {
+    cwd: resolve("apps/web"),
+    env: { ...process.env, NODE_ENV: "production" },
+    stdio: ["ignore", "pipe", "pipe"],
+  },
 );
-async function ready(url, child) {
-  for (let n = 0; n < 60; n++) {
-    if (child.exitCode !== null)
-      throw new Error("Server exited; inspect .test-output runtime logs.");
+web.stdout.pipe(log);
+web.stderr.pipe(log);
+const localOrigin = `http://127.0.0.1:${port}`;
+try {
+  let ready = false;
+  for (let attempt = 0; attempt < 60; attempt++) {
+    if (web.exitCode !== null)
+      throw new Error("Next.js exited; inspect .test-output/web-runtime.log.");
     try {
-      if ((await fetch(url, { signal: AbortSignal.timeout(2000) })).ok) return;
+      if (
+        (
+          await fetch(localOrigin + "/login", {
+            signal: AbortSignal.timeout(2000),
+          })
+        ).ok
+      ) {
+        ready = true;
+        break;
+      }
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  throw new Error("Server did not become ready.");
-}
-try {
-  await Promise.all([
-    ready("http://127.0.0.1:4000/api/health", api),
-    ready("http://127.0.0.1:3000/login", web),
-  ]);
+  if (!ready) throw new Error("Next.js did not become ready.");
+  process.env.SMOKE_WEB_ORIGIN = localOrigin;
+  process.env.SMOKE_API_ORIGIN = localOrigin;
+  process.env.SMOKE_REQUEST_ORIGIN = process.env.APP_URL;
   await import("./smoke.mjs");
 } finally {
-  api.kill("SIGTERM");
   web.kill("SIGTERM");
-  await Promise.all(
-    [api, web].map((child) =>
-      child.exitCode !== null
-        ? Promise.resolve()
-        : new Promise((resolve) => child.once("exit", resolve)),
-    ),
-  );
+  if (web.exitCode === null)
+    await new Promise((resolve) => web.once("exit", resolve));
+  log.end();
 }

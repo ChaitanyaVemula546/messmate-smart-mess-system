@@ -2,7 +2,9 @@
 
 Smart Attendance. Smarter Cooking. Less Waste.
 
-A locally runnable smart hostel mess platform: **Next.js web + Expo student app + one Node.js API + PostgreSQL-compatible database**. All code is in this repository. No website builder, paid authentication service, AI API or paid hosting subscription is needed to develop or demonstrate it.
+A smart hostel mess platform: **Next.js web + Expo student app + one Express API + PostgreSQL-compatible database**. All code is in this repository. Next.js now includes the existing API for a single Vercel deployment; local development still supports the separate API server. See the [production deployment guide](DEPLOYMENT.md) for cloud database and hosting setup.
+
+**Live:** [MessMate](https://messmate-smart-mess-system.vercel.app), with its API at [the same domain under `/api`](https://messmate-smart-mess-system.vercel.app/api). Public HTTPS checks and all 17 controlled live workflow checks passed on Vercel Hobby, including login, student meal choices and device API writes. Test records were cleaned up. GitHub automatic deployment is pending account access; direct CLI deployment works. See [deployment verification](docs/DEPLOYMENT_VERIFICATION.md) for the tested scope.
 
 ## Start on your computer
 
@@ -40,7 +42,7 @@ The full [completion report](docs/FINAL_REPORT.md) covers all 25 requested deliv
 
 ```text
 apps/
-  web/             Next.js application and same-origin API proxy
+  web/             Next.js, serverless API adapter and development API proxy
   mobile/          React Native / Expo student application
   api/             Express API, security and domain modules
 packages/
@@ -55,7 +57,7 @@ scripts/           Setup, production bundling, cleanup, secret checking and expo
 tests/             Domain and database/API integration tests
 ```
 
-Clients never connect directly to the database. Web uses an HttpOnly cookie through its `/api` proxy. Mobile uses an opaque bearer session stored in Expo SecureStore. Device credentials are independent of user sessions and stored as hashes on the server. See [architecture](docs/ARCHITECTURE.md) and [security](docs/SECURITY.md).
+Clients never connect directly to the database. Web uses an HttpOnly cookie through same-origin `/api`. Mobile uses an opaque bearer session stored in Expo SecureStore. Device credentials are independent of user sessions and stored as hashes on the server. See [architecture](docs/ARCHITECTURE.md), [security](docs/SECURITY.md), and the current [deployment guide](DEPLOYMENT.md).
 
 ## Database
 
@@ -64,6 +66,10 @@ Local default: PGlite, an embedded PostgreSQL engine, stored in `.data/messmate`
 To use local PostgreSQL instead, set `DATABASE_URL` to your own connection string in `.env`, then run the same migrations and optional seed command. An optional Docker Compose database definition is included. It requires Docker, which was not available in the build environment. See [database setup](docs/DATABASE.md).
 
 ## Mobile app
+
+For the live deployment, copy `apps/mobile/.env.example` to `apps/mobile/.env` and keep `EXPO_PUBLIC_API_BASE_URL=https://messmate-smart-mess-system.vercel.app/api`. Create a real student through the production admin portal and use that account. The Android JavaScript export passed with this address; installing and checking it on a physical phone remains a separate step.
+
+For local development:
 
 1. Run the shared API. Connect your computer and phone to the same trusted network.
 2. Copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `EXPO_PUBLIC_API_BASE_URL` to your computer's LAN address followed by `:4000/api`. Android Emulator uses `http://10.0.2.2:4000/api`. A physical phone cannot use your computer's `localhost`.
@@ -85,17 +91,17 @@ pnpm secrets:check
 
 `pnpm build` compiles the API and builds the web app. `pnpm mobile:export` creates an Android JavaScript/assets bundle; it does **not** create an APK. Actual run results and unverified physical/native checks are recorded in [verification report](docs/VERIFICATION.md). Production publishing is not a prerequisite for source completion.
 
-## First real deployment
+## Production deployment
 
-Apply migrations to an empty PostgreSQL database, create a private administrator using the bootstrap script described in [deployment](docs/DEPLOYMENT.md), and configure HTTPS/API addresses. Do not seed fictional data in production. Provision and test physical devices separately. No paid services or billing have been enabled.
+The production app is live with Neon PostgreSQL, all three migrations applied, and the first administrator created. Open the ignored root file `.production-credentials.json` locally for the admin login; never upload it. No fictional data was seeded and no paid services or billing were enabled. Use the [deployment guide](DEPLOYMENT.md) for updates, variables, logs and rollback. Provision and test physical devices separately.
 
 ## Source control
 
-The build workspace has local Git checkpoints; the ZIP includes a source-history.bundle for restoring them. The project is not connected to a remote repository. Follow [GitHub upload instructions](docs/DEPLOYMENT.md#manual-private-github-upload); use a private repository named `messmate-smart-mess-system`. Credentials and development database files are excluded from the export.
+Local Git history has been restored from the supplied source-history.bundle while preserving newer UI changes. `origin` points to the [supplied GitHub repository](https://github.com/ChaitanyaVemula546/messmate-smart-mess-system). Repository access and the Vercel GitHub connection are still missing, so no push or automatic deployment has occurred. Follow the [account access and upload instructions](DEPLOYMENT.md#5-private-github-repository). Credentials and development database files are excluded from the export.
 
 To recreate a source ZIP after changes, commit the source and run `pnpm export` (requires Git and Python 3).
 
-After a local build, `pnpm smoke:stack` starts both compiled servers, checks their connection and stops them. Stop other servers first when using the same PGlite directory.
+With your local development servers running, `pnpm smoke` checks their connection and login flows. After a build, `pnpm smoke:stack` checks the single-process production server using an isolated cloud test database and test-account variables; see [the guide](DEPLOYMENT.md#8-verify-redeploy-inspect-logs-and-roll-back). `pnpm deploy:check` verifies the public HTTPS endpoint and has passed against the live deployment.
 
 ## Honest limits
 
@@ -104,4 +110,4 @@ After a local build, `pnpm smoke:stack` starts both compiled servers, checks the
 - The included firmware examples require calibration, endpoint and root-certificate configuration.
 - One campus is supported per deployment. Multi-campus tenancy, password reset emails, push notifications and offline event reconciliation are not implemented.
 - Historical ABSENT imports validate the record but do not erase existing attendance. Unknown original check-in times are stored as null.
-- Production hosting, real PostgreSQL network configuration and physical-device network conditions must be verified in the target environment.
+- Public hosting and real PostgreSQL connectivity passed verification; GitHub automatic deployment, separate-network access and physical-device network conditions still need verification.

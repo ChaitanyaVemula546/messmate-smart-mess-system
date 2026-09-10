@@ -1,4 +1,5 @@
 "use client";
+import { AnimatedNumber } from "./motion";
 import { useState } from "react";
 import { Plus, Printer, Sparkles } from "lucide-react";
 import { addDays, localClock } from "@messmate/shared";
@@ -425,7 +426,10 @@ export function Reports() {
                   Food waste avoided
                   <br />
                   <strong>
-                    {number(remote.data.totals.avoidedKg, 2)}
+                    <AnimatedNumber
+                      value={remote.data.totals.avoidedKg}
+                      digits={2}
+                    />
                     {remote.data.totals.avoidedKg !== null ? " kg" : ""}
                   </strong>
                 </p>
@@ -433,7 +437,10 @@ export function Reports() {
                   CO₂ equivalent avoided
                   <br />
                   <strong>
-                    {number(remote.data.totals.co2Avoided, 2)}
+                    <AnimatedNumber
+                      value={remote.data.totals.co2Avoided}
+                      digits={2}
+                    />
                     {remote.data.totals.co2Avoided !== null ? " kg CO₂e" : ""}
                   </strong>
                 </p>
@@ -441,7 +448,7 @@ export function Reports() {
                   Water saved
                   <br />
                   <strong>
-                    {number(remote.data.totals.waterSaved, 0)}
+                    <AnimatedNumber value={remote.data.totals.waterSaved} />
                     {remote.data.totals.waterSaved !== null ? " litres" : ""}
                   </strong>
                 </p>
@@ -449,9 +456,15 @@ export function Reports() {
                   Waste per check-in
                   <br />
                   <strong>
-                    {remote.data.totals.wastePerStudent === null
-                      ? "—"
-                      : number(remote.data.totals.wastePerStudent, 3) + " kg"}
+                    {remote.data.totals.wastePerStudent === null ? (
+                      "—"
+                    ) : (
+                      <AnimatedNumber
+                        value={remote.data.totals.wastePerStudent}
+                        digits={3}
+                        suffix=" kg"
+                      />
+                    )}
                   </strong>
                 </p>
               </div>

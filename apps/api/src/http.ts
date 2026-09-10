@@ -125,4 +125,6 @@ export interface Context {
   origin: string;
   production: boolean;
   now: () => Date;
+  vercel?: boolean;
+  waitUntil?: (promise: Promise<unknown>) => void;
 }

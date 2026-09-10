@@ -9,6 +9,7 @@ build/
 coverage/
 .data/
 .demo-credentials.json
+.production-credentials.json
 .test-output/
 *.log
 *.tsbuildinfo
@@ -22,3 +23,6 @@ firmware/**/config.h
 *.zip
 
 .patch-work/
+.vercel/
+*.pem
+*.key

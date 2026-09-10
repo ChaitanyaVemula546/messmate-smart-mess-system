@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, RefreshCw } from "lucide-react";
 import { localClock } from "@messmate/shared";
 import type { Page } from "@messmate/types";
 import { api, useAction, useRemote } from "./hooks";
@@ -17,6 +17,8 @@ import {
   timestamp,
 } from "./ui";
 import { StudentPicker } from "./people-pages";
+import { MealTabs, MealPanel } from "./meal-tabs";
+import { FingerprintFeedback } from "./fingerprint-feedback";
 interface AttendanceRow {
   id: string;
   student_id: string;
@@ -37,6 +39,7 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
     [studentId, setStudentId] = useState(""),
     [reason, setReason] = useState(""),
     [text, setText] = useState(""),
+    [refreshing, setRefreshing] = useState(false),
     [importResult, setImportResult] = useState<{
       processed: number;
       successful: number;
@@ -57,6 +60,10 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
       `/admin/attendance?date=${date}&meal=${meal}&search=${encodeURIComponent(search)}&page=${p}`,
     ),
     action = useAction();
+  const fingerprintRows =
+    remote.data?.items.filter(
+      (row) => row.present && row.source === "FINGERPRINT",
+    ) ?? [];
   return (
     <div className="stack">
       <Heading
@@ -64,6 +71,21 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
         description="Compare student intentions with recorded attendance."
         actions={
           <>
+            <Button
+              variant="secondary"
+              disabled={remote.loading || refreshing}
+              onClick={async () => {
+                setRefreshing(true);
+                try {
+                  await remote.reload();
+                } finally {
+                  setRefreshing(false);
+                }
+              }}
+            >
+              <RefreshCw size={15} />
+              Refresh
+            </Button>
             <Export kind="attendance" from={date} to={date} />
             {isAdmin && (
               <Button variant="secondary" onClick={() => setImportOpen(true)}>
@@ -91,19 +113,6 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
             }}
           />
         </Field>
-        <Field label="Meal">
-          <select
-            value={meal}
-            onChange={(e) => {
-              setMeal(e.target.value);
-              setP(1);
-            }}
-          >
-            {["BREAKFAST", "LUNCH", "DINNER"].map((m) => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
-        </Field>
         <Field label="Search students">
           <input
             type="search"
@@ -116,50 +125,88 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
           />
         </Field>
       </div>
-      {remote.loading ? (
-        <Loading />
-      ) : remote.error ? (
-        <Retry error={remote.error} reload={remote.reload} />
-      ) : (
-        remote.data && (
-          <>
-            <div className="kpi-grid">
-              <Kpi label="Expected" value={remote.data.summary.expected} />
-              <Kpi label="Present" value={remote.data.summary.present} />
-              <Kpi
-                label="Expected, not arrived"
-                value={remote.data.summary.absent}
-              />
-              <Kpi
-                label="Unexpected arrivals"
-                value={remote.data.summary.unexpected}
-              />
-            </div>
-            <div className="card table-card">
-              <Table
-                rows={remote.data.items}
-                columns={[
-                  { key: "student_id", label: "Student ID" },
-                  { key: "name", label: "Name" },
-                  { key: "response", label: "Expected response" },
-                  { key: "present", label: "Attendance" },
-                  { key: "fingerprint_id", label: "Fingerprint" },
-                  {
-                    key: "check_in_time",
-                    label: "Check-in (IST)",
-                    render: (r) =>
-                      r.source === "IMPORT"
-                        ? "Imported · time unknown"
-                        : timestamp(r.check_in_time),
-                  },
-                  { key: "source", label: "Source" },
-                ]}
-              />
-              <Pager {...remote.data} onChange={setP} />
-            </div>
-          </>
-        )
-      )}
+      <MealTabs
+        value={meal}
+        id="attendance-meal"
+        onChange={(value) => {
+          setMeal(value);
+          setP(1);
+        }}
+      />
+      <MealPanel meal={meal} id="attendance-meal">
+        <FingerprintFeedback
+          state={
+            remote.loading || refreshing
+              ? "scanning"
+              : remote.error
+                ? "error"
+                : fingerprintRows.length
+                  ? "success"
+                  : "ready"
+          }
+          message={
+            remote.loading || refreshing
+              ? "Checking recorded arrivals…"
+              : remote.error
+                ? "Attendance could not be refreshed"
+                : fingerprintRows.length
+                  ? "Fingerprint attendance confirmed"
+                  : "Waiting for recorded fingerprint attendance"
+          }
+          detail={
+            remote.loading || refreshing
+              ? "Reading this meal's attendance from MessMate."
+              : remote.error
+                ? "Check the connection and retry below."
+                : `${date} · ${meal.toLowerCase()} · ${fingerprintRows.length} fingerprint check-ins in this page of results. Refresh after scanning.`
+          }
+          eventKey={`${date}-${meal}-${p}-${refreshing}-${remote.loading}-${remote.error}-${fingerprintRows.map((row) => row.id + row.check_in_time).join("|")}`}
+        />
+        {remote.loading ? (
+          <Loading />
+        ) : remote.error ? (
+          <Retry error={remote.error} reload={remote.reload} />
+        ) : (
+          remote.data && (
+            <>
+              <div className="kpi-grid">
+                <Kpi label="Expected" value={remote.data.summary.expected} />
+                <Kpi label="Present" value={remote.data.summary.present} />
+                <Kpi
+                  label="Expected, not arrived"
+                  value={remote.data.summary.absent}
+                />
+                <Kpi
+                  label="Unexpected arrivals"
+                  value={remote.data.summary.unexpected}
+                />
+              </div>
+              <div className="card table-card">
+                <Table
+                  rows={remote.data.items}
+                  columns={[
+                    { key: "student_id", label: "Student ID" },
+                    { key: "name", label: "Name" },
+                    { key: "response", label: "Expected response" },
+                    { key: "present", label: "Attendance" },
+                    { key: "fingerprint_id", label: "Fingerprint" },
+                    {
+                      key: "check_in_time",
+                      label: "Check-in (IST)",
+                      render: (r) =>
+                        r.source === "IMPORT"
+                          ? "Imported · time unknown"
+                          : timestamp(r.check_in_time),
+                    },
+                    { key: "source", label: "Source" },
+                  ]}
+                />
+                <Pager {...remote.data} onChange={setP} />
+              </div>
+            </>
+          )
+        )}
+      </MealPanel>
       <Modal
         open={open}
         onClose={() => setOpen(false)}

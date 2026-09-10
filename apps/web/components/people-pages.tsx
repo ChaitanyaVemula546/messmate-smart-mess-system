@@ -1,4 +1,5 @@
 "use client";
+import { FingerprintFeedback, ScannerActivity } from "./fingerprint-feedback";
 import { useState } from "react";
 import {
   Plus,
@@ -345,6 +346,7 @@ export function Fingerprints() {
   const remote = useRemote<Page<MappingRow>>(
     `/admin/fingerprints?page=${p}&search=${encodeURIComponent(search)}&mapped=${mapped}`,
   );
+  const scannerActivity = useRemote<Device[]>("/admin/devices", 20000);
   const action = useAction();
   return (
     <div className="stack">
@@ -362,6 +364,11 @@ export function Fingerprints() {
             Assign fingerprint
           </Button>
         }
+      />
+      <ScannerActivity
+        devices={scannerActivity.data}
+        loading={scannerActivity.loading}
+        error={scannerActivity.error}
       />
       <Feedback action={action} />
       <div className="toolbar">
@@ -482,7 +489,17 @@ export function Fingerprints() {
               onChange={(e) => setFingerprintId(Number(e.target.value))}
             />
           </Field>
-          {action.error && <ErrorBox message={action.error} />}
+          {(action.busy || action.error) && (
+            <FingerprintFeedback
+              state={action.error ? "error" : "scanning"}
+              message={action.error || "Saving fingerprint assignment…"}
+              detail={
+                action.error
+                  ? "The assignment was not saved. Review the enrolled ID and student."
+                  : "Checking this assignment with MessMate."
+              }
+            />
+          )}
           <Button disabled={action.busy}>Save assignment</Button>
         </form>
       </Modal>
