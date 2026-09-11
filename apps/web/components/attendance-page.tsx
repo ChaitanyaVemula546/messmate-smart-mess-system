@@ -58,6 +58,7 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
       }
     >(
       `/admin/attendance?date=${date}&meal=${meal}&search=${encodeURIComponent(search)}&page=${p}`,
+      10000,
     ),
     action = useAction();
   const fingerprintRows =
@@ -158,7 +159,7 @@ export function AttendancePage({ isAdmin }: { isAdmin: boolean }) {
               ? "Reading this meal's attendance from MessMate."
               : remote.error
                 ? "Check the connection and retry below."
-                : `${date} · ${meal.toLowerCase()} · ${fingerprintRows.length} fingerprint check-ins in this page of results. Refresh after scanning.`
+                : `${date} · ${meal.toLowerCase()} · ${fingerprintRows.length} fingerprint check-ins in this page of results. Refreshes every 10 seconds.`
           }
           eventKey={`${date}-${meal}-${p}-${refreshing}-${remote.loading}-${remote.error}-${fingerprintRows.map((row) => row.id + row.check_in_time).join("|")}`}
         />

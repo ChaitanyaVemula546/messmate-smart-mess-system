@@ -147,12 +147,13 @@ function History() {
   const [p, setP] = useState(1);
   const { data, error, loading, reload } = useRemote<Page<HistoryRow>>(
     "/student/history?page=" + p,
+    10000,
   );
   return (
     <div className="stack">
       <Heading
         title="Your meal history"
-        description="Your plans and attendance, together in one place."
+        description="Your plans and attendance, together in one place. New check-ins appear automatically."
       />
       {loading ? (
         <Loading />
@@ -186,8 +187,10 @@ function History() {
   );
 }
 function Profile() {
-  const { data, error, loading, reload } =
-    useRemote<Student>("/student/profile");
+  const { data, error, loading, reload } = useRemote<Student>(
+    "/student/profile",
+    10000,
+  );
   return (
     <div className="stack">
       <Heading
@@ -213,8 +216,10 @@ function Profile() {
                 ["Hostel", data.hostel],
                 ["Room", data.room_number],
                 [
-                  "Fingerprint mapping",
-                  data.fingerprint_id ? "Assigned" : "Not assigned",
+                  "Fingerprint ID",
+                  data.fingerprint_id === null
+                    ? "Not assigned"
+                    : String(data.fingerprint_id),
                 ],
               ].map(([label, value]) => (
                 <div key={label}>
@@ -223,6 +228,14 @@ function Profile() {
                 </div>
               ))}
             </div>
+            <div className="divider" />
+            <p className="muted" style={{ marginBottom: 0 }}>
+              {data.fingerprint_id === null
+                ? "Ask your mess administrator to enroll your finger on the scanner and assign its ID to your student account."
+                : `Fingerprint ID ${data.fingerprint_id} links your enrolled finger to this account. Scan it during the meal window to record attendance.`}{" "}
+              Your fingerprint template stays on the sensor. A saved assignment
+              alone does not record attendance.
+            </p>
           </section>
         )
       )}

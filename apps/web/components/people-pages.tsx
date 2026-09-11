@@ -9,7 +9,13 @@ import {
   History as HistoryIcon,
   KeyRound,
 } from "lucide-react";
-import type { Student, Page, HistoryRow, Device } from "@messmate/types";
+import type {
+  Student,
+  Page,
+  HistoryRow,
+  Device,
+  FingerprintInventoryRow,
+} from "@messmate/types";
 import { api, useAction, useRemote } from "./hooks";
 import {
   Button,
@@ -23,12 +29,15 @@ import {
   ErrorBox,
 } from "./ui";
 import { Heading, Feedback, Retry, Export } from "./admin-common";
+import { SensorInventory } from "./sensor-inventory";
 export function StudentPicker({
   value,
   onChange,
+  selectedLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
+  selectedLabel?: string;
 }) {
   const [search, setSearch] = useState("");
   const { data, error } = useRemote<Page<Student>>(
@@ -52,6 +61,11 @@ export function StudentPicker({
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">Choose a student</option>
+          {value &&
+            selectedLabel &&
+            !data?.items.some((student) => student.id === value) && (
+              <option value={value}>{selectedLabel}</option>
+            )}
           {data?.items.map((s) => (
             <option key={s.id} value={s.id}>
               {s.student_id} · {s.name}
@@ -294,6 +308,7 @@ function HistoryModal({
   const [p, setP] = useState(1);
   const remote = useRemote<Page<HistoryRow>>(
     `/admin/students/${student.id}/history?page=${p}`,
+    10000,
   );
   return (
     <Modal open onClose={onClose} title={student.name + " · history"}>
@@ -337,14 +352,21 @@ interface MappingRow {
 }
 export function Fingerprints() {
   const [p, setP] = useState(1),
+    [inventoryPage, setInventoryPage] = useState(1),
     [search, setSearch] = useState(""),
     [mapped, setMapped] = useState(""),
     [open, setOpen] = useState(false),
     [studentId, setStudentId] = useState(""),
+    [studentLabel, setStudentLabel] = useState(""),
     [fingerprintId, setFingerprintId] = useState(1),
     [remove, setRemove] = useState<MappingRow | null>(null);
   const remote = useRemote<Page<MappingRow>>(
     `/admin/fingerprints?page=${p}&search=${encodeURIComponent(search)}&mapped=${mapped}`,
+    10000,
+  );
+  const inventory = useRemote<Page<FingerprintInventoryRow>>(
+    `/admin/fingerprint-inventory?page=${inventoryPage}&pageSize=20`,
+    10000,
   );
   const scannerActivity = useRemote<Device[]>("/admin/devices", 20000);
   const action = useAction();
@@ -357,6 +379,8 @@ export function Fingerprints() {
           <Button
             onClick={() => {
               setStudentId("");
+              setStudentLabel("");
+              setFingerprintId(1);
               setOpen(true);
             }}
           >
@@ -371,6 +395,22 @@ export function Fingerprints() {
         error={scannerActivity.error}
       />
       <Feedback action={action} />
+      <SensorInventory
+        remote={inventory}
+        onPageChange={setInventoryPage}
+        onAssign={(row) => {
+          setStudentId(row.student_id ?? "");
+          setStudentLabel(
+            row.student_id ? `${row.student_code} · ${row.name}` : "",
+          );
+          setFingerprintId(row.fingerprint_id);
+          setOpen(true);
+        }}
+      />
+      <div>
+        <h2>Student assignments</h2>
+        <small>Choose an ID from the sensor inventory or enter it manually.</small>
+      </div>
       <div className="toolbar">
         <Field label="Search">
           <input
@@ -434,6 +474,7 @@ export function Fingerprints() {
                         size="small"
                         onClick={() => {
                           setStudentId(r.student_uuid);
+                          setStudentLabel(`${r.student_id} · ${r.name}`);
                           setFingerprintId(r.fingerprint_id ?? 1);
                           setOpen(true);
                         }}
@@ -463,6 +504,7 @@ export function Fingerprints() {
         open={open}
         onClose={() => setOpen(false)}
         title="Assign a fingerprint"
+        description="To move an ID to another student, remove its current assignment first."
       >
         <form
           className="stack"
@@ -474,11 +516,18 @@ export function Fingerprints() {
                 body: { studentId, fingerprintId },
               });
               setOpen(false);
-              await remote.reload();
+              await Promise.all([remote.reload(), inventory.reload()]);
             });
           }}
         >
-          <StudentPicker value={studentId} onChange={setStudentId} />
+          <StudentPicker
+            value={studentId}
+            selectedLabel={studentLabel}
+            onChange={(value) => {
+              setStudentId(value);
+              setStudentLabel("");
+            }}
+          />
           <Field label="Enrolled fingerprint ID (1–1000)">
             <input
               required
@@ -522,7 +571,7 @@ export function Fingerprints() {
                 method: "DELETE",
               });
               setRemove(null);
-              await remote.reload();
+              await Promise.all([remote.reload(), inventory.reload()]);
             }, "Fingerprint mapping removed.")
           }
         >

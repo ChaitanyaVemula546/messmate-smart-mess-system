@@ -1,5 +1,15 @@
 # Verification report
 
+## Fingerprint inventory update — 11 September 2026
+
+The current fingerprint-only update passed **48 automated tests**, TypeScript, lint and the Next.js production build. Its fourth migration, `0004_sensor_fingerprints.sql`, has been applied to the cloud database. Production deployment `dpl_CS93xU4VoaqTAjPrKhgtkz3fXz1X` is READY at the existing URL, and **17 live fingerprint workflow steps passed** with exact test-fixture cleanup. The authenticated new Fingerprints page loaded. The current live meal-attendance write was skipped outside the configured meal windows; previous live attendance and automated attendance checks remain recorded separately.
+
+The existing real scanner `ESP32_R307_01` is provisioned and its ignored local configuration is populated. Firmware compilation passed with that configuration: 1,031,344 bytes (78%) flash and 49,672 bytes (15%) RAM. The ready sketch is at `C:\Arduino\epics project\messmate_fingerprint\messmate_fingerprint.ino`.
+
+USB upload and boot passed on COM4 with DIO/40 MHz and the written hash verified; the previous 4 MB ESP32 flash was backed up privately. The board connected to Wi-Fi, synchronized time and read 12 sensor slots. An outdated scanner token was refreshed privately and re-flashed, but the sensor stopped responding after restart. Final physical inventory upload, enrollment and witnessed attendance await a stable sensor connection. The new Fingerprints page and assignment dialog were inspected in a browser, including a 390 × 844 layout without horizontal overflow or reported page errors. Follow the [ESP32 + R307 guide](FINGERPRINT_SETUP.md) and [current deployment verification](DEPLOYMENT_VERIFICATION.md#fingerprint-inventory-update--11-september-2026). Earlier checks below remain historical records.
+
+## Original verification — 8 September 2026
+
 Verified in the local Linux build environment on **8 September 2026 (UTC)**, using Node.js 24.19.0 and pnpm 11.19.0. This report distinguishes executed software checks from configuration/examples that need target equipment.
 
 ## Executed checks

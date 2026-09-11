@@ -48,6 +48,19 @@ export interface Device {
   online: boolean;
   capacity_kg: number;
 }
+export interface FingerprintInventoryRow {
+  id: string;
+  device_id: string;
+  device_name: string;
+  device_code: string;
+  fingerprint_id: number;
+  present: boolean;
+  first_seen: string;
+  last_seen: string;
+  student_id: string | null;
+  student_code: string | null;
+  name: string | null;
+}
 export interface MetricRow {
   date: string;
   meal: Meal;

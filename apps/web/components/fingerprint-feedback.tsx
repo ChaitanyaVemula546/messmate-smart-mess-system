@@ -181,6 +181,9 @@ export function ScannerActivity({
         result === "recorded"
           ? "Last scan: attendance recorded"
           : "Last scan: attendance already recorded";
+    } else if (result === "fingerprints_synced") {
+      state = "success";
+      message = "Enrolled fingerprint IDs synced";
     } else if (result === "authenticated") {
       state = "scanning";
       message = "Scanner request received";

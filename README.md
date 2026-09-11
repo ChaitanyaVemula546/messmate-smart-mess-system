@@ -6,6 +6,8 @@ A smart hostel mess platform: **Next.js web + Expo student app + one Express API
 
 **Live:** [MessMate](https://messmate-smart-mess-system.vercel.app), with its API at [the same domain under `/api`](https://messmate-smart-mess-system.vercel.app/api). Public HTTPS checks and all 17 controlled live workflow checks passed on Vercel Hobby, including login, student meal choices and device API writes. Test records were cleaned up. Source is pushed to the private GitHub repository; Vercel automatic deployment awaits its GitHub connection. Direct CLI deployment works. See [deployment verification](docs/DEPLOYMENT_VERIFICATION.md) for the tested scope.
 
+**Current fingerprint update:** the sensor inventory API and website are deployed. The 48-test suite, lint, TypeScript, Next.js build, firmware compile and 17 live fingerprint checks passed; the fourth cloud migration is applied. Fingerprint-only firmware uploaded and booted successfully on COM4 using DIO/40 MHz. Follow the [ESP32 + R307 setup guide](docs/FINGERPRINT_SETUP.md) for the ready Arduino sketch, enrollment and student assignment. The R307 reported 12 saved IDs, but its connection became intermittent after restart; the final sensor-to-website check is in progress.
+
 ## Start on your computer
 
 Install Node.js 22 or 24 and pnpm 11.19.0. From this directory:
@@ -28,7 +30,7 @@ The full [completion report](docs/FINAL_REPORT.md) covers all 25 requested deliv
 
 - Landing page; shared login and role-aware admin/student portals.
 - Student intentions for today/tomorrow, cutoff enforcement, attendance/meal history and profile.
-- Student account creation/edit/deactivation; fingerprint mapping and history.
+- Student account creation/edit/deactivation; fingerprint mapping and history. The new [R307 workflow](docs/FINGERPRINT_SETUP.md) adds reported sensor IDs and student assignments with automatic refresh.
 - Device provisioning with one-time tokens, enable/disable and credential rotation.
 - Fingerprint attendance with database-enforced duplicate protection, active meal detection and manual attendance with audit reasons.
 - Waste ingestion with capacity checks, explicit tare and retry identifiers; cumulative measurements do not multiply total waste.
@@ -93,7 +95,7 @@ pnpm secrets:check
 
 ## Production deployment
 
-The production app is live with Neon PostgreSQL, all three migrations applied, and the first administrator created. Open the ignored root file `.production-credentials.json` locally for the admin login; never upload it. No fictional data was seeded and no paid services or billing were enabled. Use the [deployment guide](DEPLOYMENT.md) for updates, variables, logs and rollback. Provision and test physical devices separately.
+The production app is live with Neon PostgreSQL and the first administrator created. All four migrations are applied, including the new fingerprint inventory table, and the new fingerprint API/UI deployment passed its live checks. Open the ignored root file `.production-credentials.json` locally for the admin login; never upload it. No fictional data was seeded and no paid services or billing were enabled. Use the [deployment guide](DEPLOYMENT.md) for updates, variables, logs and rollback. See the [fingerprint guide](docs/FINGERPRINT_SETUP.md) for the already-provisioned scanner and pending physical checks.
 
 ## Source control
 

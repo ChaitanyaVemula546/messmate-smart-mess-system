@@ -4,11 +4,34 @@
 
 **LIVE: public Vercel website and same-origin API connected to cloud PostgreSQL. Source is pushed to private GitHub; automatic Vercel deployment is pending its GitHub connection.**
 
-Website: [https://messmate-smart-mess-system.vercel.app](https://messmate-smart-mess-system.vercel.app). API: [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api). Deployment `dpl_kP1a3XXPB3XhWBcymozRZTnwxrZJ` completed through Vercel CLI 59.14.0 on the verified Hobby plan, with an approximately 52-second production build. No paid service was enabled.
+Website: [https://messmate-smart-mess-system.vercel.app](https://messmate-smart-mess-system.vercel.app). API: [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api). The current fingerprint update is READY as deployment `dpl_CS93xU4VoaqTAjPrKhgtkz3fXz1X`. The previous baseline was `dpl_kP1a3XXPB3XhWBcymozRZTnwxrZJ`, deployed through Vercel CLI 59.14.0 on the verified Hobby plan with an approximately 52-second production build. No paid service was enabled.
 
 The supplied folder had no `.git`; its history was restored from `source-history.bundle`, with all newer local UI/animation changes retained. `origin` points to `https://github.com/ChaitanyaVemula546/messmate-smart-mess-system.git`. On 11 September, authenticated GitHub access verified that this repository is private and permits pushes. The remote was empty before publication. The production baseline was committed and pushed as `0e36665e342596afa61008c8c7e82366b626ac3d`, and `git ls-remote` confirmed the matching `main` SHA. All 51 staged file paths were reviewed, with zero private/build paths; the pre-push secret scan passed for 250 source/history text objects. Git author identity was configured only for this repository. Vercel's GitHub connection remains pending; direct CLI deployment is working.
 
-## Public deployment checks
+## Fingerprint inventory update — 11 September 2026
+
+The fingerprint inventory update is deployed and verified through the public API. The fingerprint-only firmware was uploaded successfully to the ESP32 on COM4 and its written hash verified. A 4 MB backup of the previous ESP32 flash is retained privately in `.test-output/esp32-before-fingerprint.bin`. DIO/40 MHz corrected the initial boot failure; the board then connected to Wi-Fi, synchronized time and read 12 R307 slots. The initial HTTPS request reached the backend but was rejected because its token no longer matched. The scanner credential was refreshed privately and re-flashed. After that restart the sensor stopped responding; physical connection stability and the final inventory upload remain under investigation. The later baseline section separately records the earlier deployment checks.
+
+| Check | Current result |
+| --- | --- |
+| Full automated suite | **48 passed**, including eight fingerprint inventory cases |
+| TypeScript | Passed |
+| ESLint | Passed |
+| Next.js production build | Passed |
+| Cloud schema | Fourth migration, `0004_sensor_fingerprints.sql`, applied |
+| Real scanner provisioning | `ESP32_R307_01` provisioned; local private `config.h` populated, with no credential values published |
+| Firmware compilation | Passed with private configuration: 1,031,344 bytes (78%) flash and 49,672 bytes (15%) RAM |
+| Ready Arduino sketch | `C:\Arduino\epics project\messmate_fingerprint\messmate_fingerprint.ino`, with its private configuration beside it |
+| New public fingerprint API/UI | Deployment `dpl_CS93xU4VoaqTAjPrKhgtkz3fXz1X` READY; canonical URL unchanged |
+| Live fingerprint workflow | 17 steps passed, including repeated inventory POST/readback, student mapping join, ISO timestamps, missing-slot status with assignment retained, student profile ID, authorization/role boundaries, disabled-device denial and exact fixture cleanup |
+| New page browser check | Authenticated Fingerprints page and assignment dialog loaded; desktop/mobile layouts inspected, 390 × 844 viewport had no horizontal overflow, no page errors reported |
+| Current live meal-attendance write | Skipped because no configured meal window was active; attendance remains covered by the 48-test suite and the earlier successful live baseline |
+| Physical firmware upload | Passed and booted on ESP32-D0WD-V3, COM4, DIO/40 MHz, at 115200 baud; written hash verified |
+| R307 workflow | Read 12 saved slots once; Wi-Fi, time and TLS connection worked. Latest firmware has a backend-matching credential. Sensor connection became intermittent after restart; final sync, enrollment and witnessed attendance remain pending |
+
+The update adds authenticated complete scanner inventory snapshots, paginated admin inventory with student assignments, retained missing-slot history and ISO timestamps. The website retains manual assignment, refreshes inventory/mappings/attendance and student history/profile every 10 seconds, and shows the student's actual assigned ID. Student email/password authentication is unchanged. See [fingerprint setup and use](FINGERPRINT_SETUP.md).
+
+## Public deployment checks (previous baseline)
 
 | Check | Result |
 | --- | --- |
@@ -38,7 +61,7 @@ The supplied folder had no `.git`; its history was restored from `source-history
 
 The controlled workflow harness was run from the ignored `.test-output/live-verify.mts` against the real public HTTPS API and Neon database. It used temporary student/device records, verified writes through independent reads, and successfully cleaned up only its generated fixtures and sessions. These checks establish software/API behavior on Vercel; the device requests were simulated HTTP requests, not physical sensor readings. The separate read-only `pnpm deploy:check` remains suitable for routine reachability checks without creating records.
 
-## Executed checks
+## Executed checks (previous deployment baseline)
 
 | Check | Result |
 | --- | --- |

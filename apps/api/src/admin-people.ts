@@ -8,12 +8,41 @@ import {
   deviceUpdate,
   adminUser,
 } from "@messmate/validation";
-import type { Student } from "@messmate/types";
+import type { Student, FingerprintInventoryRow } from "@messmate/types";
 import { route, ok, fail, user, page, type Context } from "./http";
 import { audit, deviceList } from "./data";
 import { newToken, tokenHash, type Security } from "./security";
 export function peopleRoutes(ctx: Context, sec: Security) {
   const r = Router();
+  r.get(
+    "/fingerprint-inventory",
+    route(async (req, res) => {
+      const p = page(req);
+      const items = await ctx.db.query<FingerprintInventoryRow>(sql`
+        SELECT sf.id,sf.device_id,d.name AS device_name,d.device_id AS device_code,
+          sf.fingerprint_id,sf.present,sf.first_seen,sf.last_seen,
+          s.id AS student_id,s.student_id AS student_code,u.name
+        FROM sensor_fingerprints sf JOIN devices d ON d.id=sf.device_id
+        LEFT JOIN fingerprint_mappings f ON f.fingerprint_id=sf.fingerprint_id
+        LEFT JOIN students s ON s.id=f.student_id
+        LEFT JOIN users u ON u.id=s.user_id
+        ORDER BY sf.present DESC,d.name,d.id,sf.fingerprint_id
+        LIMIT ${p.pageSize} OFFSET ${p.offset}`);
+      const [count] = await ctx.db.query<{ total: number }>(
+        sql`SELECT count(*)::int AS total FROM sensor_fingerprints`,
+      );
+      ok(res, {
+        items: items.map((item) => ({
+          ...item,
+          first_seen: new Date(item.first_seen).toISOString(),
+          last_seen: new Date(item.last_seen).toISOString(),
+        })),
+        total: count.total,
+        page: p.page,
+        pageSize: p.pageSize,
+      });
+    }),
+  );
   r.get(
     "/students",
     route(async (req, res) => {

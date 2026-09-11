@@ -10,7 +10,9 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 const id = () => uuid("id").primaryKey().defaultRandom();
 const created = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -98,6 +100,33 @@ export const devices = pgTable("devices", {
   tareSession: integer("tare_session").notNull().default(0),
   createdAt: created(),
 });
+export const sensorFingerprints = pgTable(
+  "sensor_fingerprints",
+  {
+    id: id(),
+    deviceId: uuid("device_id")
+      .notNull()
+      .references(() => devices.id, { onDelete: "cascade" }),
+    fingerprintId: integer("fingerprint_id").notNull(),
+    present: boolean("present").notNull().default(true),
+    firstSeen: timestamp("first_seen", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastSeen: timestamp("last_seen", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("sensor_fingerprint_device_slot").on(
+      t.deviceId,
+      t.fingerprintId,
+    ),
+    check(
+      "sensor_fingerprints_fingerprint_id_check",
+      sql`${t.fingerprintId} BETWEEN 1 AND 1000`,
+    ),
+  ],
+);
 export const attendance = pgTable(
   "attendance",
   {

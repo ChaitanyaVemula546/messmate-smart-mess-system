@@ -35,7 +35,7 @@ for (const entry of readdirSync(root, { withFileTypes: true })) {
 function rememberPasswords(value) {
   if (!value || typeof value !== "object") return;
   for (const [key, child] of Object.entries(value)) {
-    if (/password/i.test(key)) rememberCredential(child);
+    if (/password|token/i.test(key)) rememberCredential(child);
     rememberPasswords(child);
   }
 }

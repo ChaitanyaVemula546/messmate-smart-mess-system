@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { sql } from "@messmate/database";
-import { fingerprint, waste } from "@messmate/validation";
+import { fingerprint, fingerprintInventory, waste } from "@messmate/validation";
 import { localClock, activeMeal } from "@messmate/shared";
 import type { Device } from "@messmate/types";
 import { windows } from "./data";
@@ -9,6 +9,43 @@ import { route, ok, fail, type Context } from "./http";
 import type { Security } from "./security";
 export function iotRoutes(ctx: Context, sec: Security) {
   const r = Router();
+  r.post(
+    "/fingerprints",
+    sec.device("FINGERPRINT_SCANNER"),
+    route(async (req, res) => {
+      const input = fingerprintInventory.parse(req.body);
+      const auth = res.locals.device as Device & { token_hash: string };
+      const syncedAt = ctx.now();
+      await ctx.db.transaction(async (tx) => {
+        // Serialize complete snapshots per scanner and recheck authorization
+        // after acquiring the same row lock used by device credential changes.
+        const [current] = await tx.query<Device & { token_hash: string }>(
+          sql`SELECT * FROM devices WHERE id=${auth.id} FOR UPDATE`,
+        );
+        if (!current || current.status !== "ACTIVE")
+          fail(403, "DEVICE_DISABLED", "Device is disabled.");
+        if (current.token_hash !== auth.token_hash)
+          fail(401, "UNAUTHORIZED_DEVICE", "Device credential was rotated.");
+        // A missing slot keeps its history and student assignment. last_seen
+        // means the latest successful inventory that contained that slot.
+        await tx.query(
+          sql`UPDATE sensor_fingerprints SET present=false WHERE device_id=${auth.id} AND present=true`,
+        );
+        if (input.fingerprintIds.length) {
+          const values = input.fingerprintIds.map(
+            (id) => sql`(${auth.id},${id},true,${syncedAt},${syncedAt})`,
+          );
+          await tx.query(sql`
+            INSERT INTO sensor_fingerprints(device_id,fingerprint_id,present,first_seen,last_seen)
+            VALUES ${sql.join(values, sql`, `)}
+            ON CONFLICT(device_id,fingerprint_id) DO UPDATE
+            SET present=true,last_seen=excluded.last_seen`);
+        }
+      });
+      res.locals.deviceResult = "fingerprints_synced";
+      ok(res, { synced: true, present: input.fingerprintIds.length, syncedAt });
+    }),
+  );
   r.post(
     "/attendance",
     sec.device("FINGERPRINT_SCANNER"),

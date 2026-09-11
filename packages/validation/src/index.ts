@@ -34,6 +34,17 @@ export const preference = z
 export const fingerprint = z
   .object({ fingerprintId: z.number().int().min(1).max(1000) })
   .strict();
+export const fingerprintInventory = z
+  .object({
+    fingerprintIds: z
+      .array(z.number().int().min(1).max(1000))
+      .max(1000)
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "Fingerprint IDs must be unique.",
+      ),
+  })
+  .strict();
 export const mapping = fingerprint
   .extend({ studentId: z.string().uuid() })
   .strict();
