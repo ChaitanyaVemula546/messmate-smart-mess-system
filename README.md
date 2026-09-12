@@ -6,9 +6,14 @@ A smart hostel mess platform: **Next.js web + Expo student app + one Express API
 
 **Live:** [MessMate](https://messmate-smart-mess-system.vercel.app), with its API at [the same domain under `/api`](https://messmate-smart-mess-system.vercel.app/api). Public HTTPS checks and all 17 controlled live workflow checks passed on Vercel Hobby, including login, student meal choices and device API writes. Test records were cleaned up. Source is pushed to the private GitHub repository; Vercel automatic deployment awaits its GitHub connection. Direct CLI deployment works. See [deployment verification](docs/DEPLOYMENT_VERIFICATION.md) for the tested scope.
 
-**Current fingerprint update:** the sensor inventory API and website are deployed. The 48-test suite, lint, TypeScript, Next.js build, firmware compile and 17 live fingerprint checks passed; the fourth cloud migration is applied. Fingerprint-only firmware uploaded and booted successfully on COM4 using DIO/40 MHz. Follow the [ESP32 + R307 setup guide](docs/FINGERPRINT_SETUP.md) for the ready Arduino sketch, enrollment and student assignment. The R307 reported 12 saved IDs, but its connection became intermittent after restart; the final sensor-to-website check is in progress.
+**Current fingerprint update:** the sensor inventory API and website are deployed. The 48-test suite, lint, TypeScript, Next.js build, firmware compile and 17 live fingerprint checks passed; the fourth cloud migration is applied. Fingerprint-only firmware uploaded and booted successfully on COM4 using DIO/40 MHz. The live backend contains all 12 reported sensor IDs, with the existing ID 1 student assignment retained. On 12 September, a real ID 1 scan was confirmed as fingerprint lunch attendance in production. Follow the [ESP32 + R307 setup guide](docs/FINGERPRINT_SETUP.md) for enrollment and assignment, and the [Android app guide](docs/ANDROID.md) for the student app and release build.
 
 ## Start on your computer
+
+**Android:** [Download MessMate 1.0.0](https://messmate-smart-mess-system.vercel.app/downloads/messmate-1.0.0.apk)
+(17.12 MiB, Android 7.0+). Students use their existing website email/password.
+The app uses the same cloud API, shows the assigned fingerprint ID and displays
+fingerprint attendance. See [release verification and rebuild instructions](docs/ANDROID.md).
 
 Install Node.js 22 or 24 and pnpm 11.19.0. From this directory:
 

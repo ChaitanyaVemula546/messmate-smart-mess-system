@@ -83,6 +83,9 @@ export function History() {
                         }) + " IST"}
                   </Text>
                 )}
+                {row.source === "FINGERPRINT" && (
+                  <Text style={s.body}>Fingerprint check-in</Text>
+                )}
               </Card>
             ))}
             <View style={s.between}>

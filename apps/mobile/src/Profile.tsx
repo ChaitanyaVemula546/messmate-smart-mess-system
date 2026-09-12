@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Alert } from "react-native";
+import { ScrollView, Text, View, Alert, RefreshControl } from "react-native";
 import type { Student } from "@messmate/types";
 import { useRemote } from "./useRemote";
 import { useAuth } from "./auth";
@@ -7,7 +7,12 @@ import { styles as s } from "./theme";
 export function Profile() {
   const remote = useRemote<Student>("/student/profile");
   return (
-    <ScrollView contentContainerStyle={s.content}>
+    <ScrollView
+      contentContainerStyle={s.content}
+      refreshControl={
+        <RefreshControl refreshing={remote.loading} onRefresh={() => void remote.reload()} />
+      }
+    >
       <Text style={s.eyebrow}>YOUR CAMPUS IDENTITY</Text>
       <Text style={s.title}>Your profile</Text>
       <ErrorNotice message={remote.error} />
@@ -26,7 +31,9 @@ export function Profile() {
               ["Room", remote.data.room_number],
               [
                 "Fingerprint",
-                remote.data.fingerprint_id ? "Assigned" : "Not assigned",
+                remote.data.fingerprint_id
+                  ? `ID ${remote.data.fingerprint_id}`
+                  : "Not assigned",
               ],
             ].map(([label, value]) => (
               <View key={label}>
@@ -38,8 +45,9 @@ export function Profile() {
         )
       )}
       <Text style={s.body}>
-        Contact your mess administrator to update campus details or fingerprint
-        assignments.
+        Your mess scanner sends attendance to the same account shown here. Pull
+        down to refresh your fingerprint ID, or open Attendance history to see
+        recorded check-ins. Contact your mess administrator to change assignments.
       </Text>
     </ScrollView>
   );

@@ -18,3 +18,7 @@
 *.log
 *.pem
 *.key
+*.p12
+apps/mobile/android
+apps/mobile/ios
+.android-signing

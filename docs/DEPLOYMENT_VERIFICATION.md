@@ -1,16 +1,36 @@
-# Deployment verification — updated 11 September 2026
+# Deployment verification — updated 12 September 2026
 
 ## Status
 
 **LIVE: public Vercel website and same-origin API connected to cloud PostgreSQL. Source is pushed to private GitHub; automatic Vercel deployment is pending its GitHub connection.**
 
-Website: [https://messmate-smart-mess-system.vercel.app](https://messmate-smart-mess-system.vercel.app). API: [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api). The current fingerprint update is READY as deployment `dpl_CS93xU4VoaqTAjPrKhgtkz3fXz1X`. The previous baseline was `dpl_kP1a3XXPB3XhWBcymozRZTnwxrZJ`, deployed through Vercel CLI 59.14.0 on the verified Hobby plan with an approximately 52-second production build. No paid service was enabled.
+Website: [https://messmate-smart-mess-system.vercel.app](https://messmate-smart-mess-system.vercel.app). API: [https://messmate-smart-mess-system.vercel.app/api](https://messmate-smart-mess-system.vercel.app/api). The Android download release is READY as deployment `dpl_CQXTaJVbxg9jKacYrA5L181NWVN7`, preserving the fingerprint update from `dpl_CS93xU4VoaqTAjPrKhgtkz3fXz1X`. No paid service was enabled.
+
+## Android download release — 12 September 2026
+
+[MessMate 1.0.0 APK](https://messmate-smart-mess-system.vercel.app/downloads/messmate-1.0.0.apk)
+is publicly downloadable. An anonymous full download returned HTTP 200, MIME
+`application/vnd.android.package-archive`, and 17,950,404 bytes. Its SHA-256
+matched the locally verified signed release. The public API health check still
+returned application OK and database connected after deployment.
+
+The native release build passed, including Android release lint and signing.
+APK signature verification passed; application ID/version, non-debuggable manifest,
+ARM64/ARMv7 libraries, production API address, fingerprint screens, one React
+implementation and absence of configured private credentials were checked.
+The native app has not been installed on a physical phone here. See
+[Android release details](ANDROID.md) for the checksum and reproducible build steps.
+
+The production website was also checked after the real sensor scan: its
+Fingerprints page displayed all 12 saved IDs and ID 1 assigned to the existing
+student; Lunch attendance displayed Present, FINGERPRINT and 12:31 PM IST. The
+dedicated verification browser session was signed out and closed.
 
 The supplied folder had no `.git`; its history was restored from `source-history.bundle`, with all newer local UI/animation changes retained. `origin` points to `https://github.com/ChaitanyaVemula546/messmate-smart-mess-system.git`. On 11 September, authenticated GitHub access verified that this repository is private and permits pushes. The remote was empty before publication. The production baseline was committed and pushed as `0e36665e342596afa61008c8c7e82366b626ac3d`, and `git ls-remote` confirmed the matching `main` SHA. All 51 staged file paths were reviewed, with zero private/build paths; the pre-push secret scan passed for 250 source/history text objects. Git author identity was configured only for this repository. Vercel's GitHub connection remains pending; direct CLI deployment is working.
 
 ## Fingerprint inventory update — 11 September 2026
 
-The fingerprint inventory update is deployed and verified through the public API. The fingerprint-only firmware was uploaded successfully to the ESP32 on COM4 and its written hash verified. A 4 MB backup of the previous ESP32 flash is retained privately in `.test-output/esp32-before-fingerprint.bin`. DIO/40 MHz corrected the initial boot failure; the board then connected to Wi-Fi, synchronized time and read 12 R307 slots. The initial HTTPS request reached the backend but was rejected because its token no longer matched. The scanner credential was refreshed privately and re-flashed. After that restart the sensor stopped responding; physical connection stability and the final inventory upload remain under investigation. The later baseline section separately records the earlier deployment checks.
+The fingerprint inventory update is deployed and verified through the public API. The fingerprint-only firmware was uploaded successfully to the ESP32 on COM4 and its written hash verified. A 4 MB backup of the previous ESP32 flash is retained privately in `.test-output/esp32-before-fingerprint.bin`. DIO/40 MHz corrected the initial boot failure; the board then connected to Wi-Fi, synchronized time and read 12 R307 slots. The initial HTTPS request reached the backend but was rejected because its token no longer matched. The scanner credential was refreshed privately and re-flashed. The sensor subsequently recovered and uploaded all 12 saved IDs. An authenticated production read confirmed those IDs as present, the existing ID 1 assignment retained, and scanner result `fingerprints_synced` at 15:54:42 UTC on 11 September. On 12 September the user returned to the original Galaxy hotspot. Its private Wi-Fi settings were restored without changing the scanner token, compiled and uploaded with the written hash verified. Serial status confirmed Wi-Fi, time and R307 ready, followed by inventory HTTP 200. The production API confirmed all 12 IDs refreshed at 06:59:50 UTC. The user then scanned the finger assigned to ID 1; production attendance confirmed student 24eu07006 present for LUNCH on 12 September at 07:01:18.434 UTC (12:31 PM IST), source FINGERPRINT. The later baseline section separately records the earlier deployment checks.
 
 | Check | Current result |
 | --- | --- |
@@ -27,7 +47,7 @@ The fingerprint inventory update is deployed and verified through the public API
 | New page browser check | Authenticated Fingerprints page and assignment dialog loaded; desktop/mobile layouts inspected, 390 × 844 viewport had no horizontal overflow, no page errors reported |
 | Current live meal-attendance write | Skipped because no configured meal window was active; attendance remains covered by the 48-test suite and the earlier successful live baseline |
 | Physical firmware upload | Passed and booted on ESP32-D0WD-V3, COM4, DIO/40 MHz, at 115200 baud; written hash verified |
-| R307 workflow | Read 12 saved slots once; Wi-Fi, time and TLS connection worked. Latest firmware has a backend-matching credential. Sensor connection became intermittent after restart; final sync, enrollment and witnessed attendance remain pending |
+| R307 workflow | Wi-Fi/time/R307 ready; real inventory HTTP 200; all 12 IDs confirmed in cloud with ID 1 assignment retained. User-performed ID 1 lunch scan confirmed as FINGERPRINT attendance on 12 September at 12:31 PM IST. New enrollment remains untested |
 
 The update adds authenticated complete scanner inventory snapshots, paginated admin inventory with student assignments, retained missing-slot history and ISO timestamps. The website retains manual assignment, refreshes inventory/mappings/attendance and student history/profile every 10 seconds, and shows the student's actual assigned ID. Student email/password authentication is unchanged. See [fingerprint setup and use](FINGERPRINT_SETUP.md).
 
@@ -110,7 +130,7 @@ Before cloud configuration was available, using a separately started **compiled 
 
 The private GitHub source push is complete. Automatic Vercel deployment still needs the GitHub account/repository connection in the existing Vercel project's Git settings and a successful Git-triggered release. The public site and API work independently of that integration. Access from a separate physical network, such as a phone on cellular data, has not been verified. Platform-specific lifecycle and forwarded-IP behavior have automated software coverage, but were not separately stress-tested across multiple live Vercel instances. `pnpm smoke:stack` requires an isolated cloud test database and private test accounts and was not run against the production database.
 
-Real ESP32/R307/HX711 operation, TLS root trust on the devices, calibration, and native Expo installation were not tested. Simulated device requests successfully reached the production API and wrote controlled attendance/waste records. The existing hardware payloads and endpoint paths were preserved; both firmware configuration examples now use the production hostname. The Expo export was verified with the real public API URL, and the release guard refuses the Android emulator fallback outside development.
+The real ESP32/R307 inventory and attendance path is now verified as recorded above, including device HTTPS requests. HX711/load-cell work remains deferred as requested. Native Android installation on a phone remains untested. Simulated device requests successfully reached the production API and wrote controlled attendance/waste records. The existing hardware payloads and endpoint paths were preserved; both firmware configuration examples now use the production hostname. The Expo export was verified with the real public API URL, and the release guard refuses the Android emulator fallback outside development.
 
 The registry audit cannot recognize the supplied `image-size` 1.2.1 source patch. It still reports two high version-based advisories in Expo's build chain. The repository regression test confirms that the affected parsers are disabled and PNG still works. Do not remove the patch or describe the full workspace audit as clean. A full dev-dependency audit also reports the existing Vitest 3 mock-server advisory; verification uses `vitest run`, not a publicly exposed Vitest server.
 

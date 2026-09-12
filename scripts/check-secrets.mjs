@@ -60,11 +60,12 @@ const ignored = new Set([
   "build",
   "coverage",
   ".test-output",
+  ".android-signing",
 ]);
 const privateName = (name) =>
   (/(^|\/)\.env(?:$|\.)/.test(name) && !name.endsWith(".env.example")) ||
   /(^|\/)(\.(?:demo|production)-credentials\.json|config\.h)$/.test(name) ||
-  /\.(keystore|jks|pem|key)$/.test(name);
+  /\.(keystore|jks|p12|pem|key)$/.test(name);
 const patterns = [
   ["private key", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
   [

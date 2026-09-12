@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "expo start",
     "typecheck": "tsc --noEmit",
-    "export": "expo export --platform android"
+    "export": "expo export --platform android",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@messmate/api-client": "workspace:*",
