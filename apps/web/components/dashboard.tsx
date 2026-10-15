@@ -141,7 +141,13 @@ export function Dashboard() {
                 <div>
                   <span>Waste recorded</span>
                   <strong>
-                    <AnimatedNumber value={meal.waste_kg} digits={2} /> kg
+                    {meal.has_waste ? (
+                      <>
+                        <AnimatedNumber value={meal.waste_kg} digits={2} /> kg
+                      </>
+                    ) : (
+                      "Not recorded"
+                    )}
                   </strong>
                 </div>
               </div>
@@ -165,7 +171,9 @@ export function Dashboard() {
           <div className="between">
             <div>
               <h3 style={{ marginBottom: 4 }}>Make waste visible</h3>
-              <small>Measured food waste over the last seven days</small>
+              <small>
+                Recorded food waste · weighed or estimated · last seven days
+              </small>
             </div>
             <Link href="/admin/waste" className="muted">
               <ArrowUpRight size={18} />
@@ -194,7 +202,8 @@ export function Dashboard() {
               {
                 key: "waste_kg",
                 label: "Waste",
-                render: (r) => number(r.waste_kg, 2) + " kg",
+                render: (r) =>
+                  r.has_waste ? number(r.waste_kg, 2) + " kg" : "Not recorded",
               },
             ]}
           />
