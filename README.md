@@ -118,3 +118,8 @@ With your local development servers running, `pnpm smoke` checks their connectio
 - One campus is supported per deployment. Multi-campus tenancy, password reset emails, push notifications and offline event reconciliation are not implemented.
 - Historical ABSENT imports validate the record but do not erase existing attendance. Unknown original check-in times are stored as null.
 - Public hosting and real PostgreSQL connectivity passed verification; GitHub automatic deployment, separate-network access and physical-device network conditions still need verification.
+
+
+## Manual food-waste workflow (no HX711 required)
+
+The admin food-waste page now supports staff-entered **weighed** or **estimated** waste for each meal. The schema and API are documented in [docs/MANUAL_WASTE.md](docs/MANUAL_WASTE.md). Existing fingerprint attendance remains unchanged. Apply migration `0005_manual_waste.sql` to a staging database before deploying the new web/API pair.

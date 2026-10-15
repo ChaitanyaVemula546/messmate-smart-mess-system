@@ -7,6 +7,7 @@ import {
   date,
   boolean,
   doublePrecision,
+  numeric,
   jsonb,
   uniqueIndex,
   index,
@@ -173,6 +174,34 @@ export const wasteMeasurements = pgTable(
     index("waste_date_meal").on(t.date, t.meal),
   ],
 );
+// Records entered by staff; never combined with unverified IoT telemetry.
+export const manualWasteRecords = pgTable(
+  "manual_waste_records",
+  {
+    id: id(),
+    date: date("date").notNull(),
+    meal: text("meal").notNull(),
+    unservedKg: numeric("unserved_kg", { precision: 12, scale: 3 }).notNull(),
+    plateKg: numeric("plate_kg", { precision: 12, scale: 3 }).notNull(),
+    measurementMethod: text("measurement_method").notNull(),
+    remarks: text("remarks").notNull().default(""),
+    createdBy: uuid("created_by").notNull().references(() => users.id),
+    updatedBy: uuid("updated_by").notNull().references(() => users.id),
+    createdAt: created(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("manual_waste_records_date_meal_key").on(t.date, t.meal),
+  ],
+);
+export const manualWasteRevisions = pgTable("manual_waste_revisions", {
+  id: id(),
+  recordId: uuid("record_id").notNull().references(() => manualWasteRecords.id),
+  changedBy: uuid("changed_by").notNull().references(() => users.id),
+  beforeData: jsonb("before_data"),
+  afterData: jsonb("after_data").notNull(),
+  changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
+});
 export const foodPreparations = pgTable(
   "food_preparations",
   {

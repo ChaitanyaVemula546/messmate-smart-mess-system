@@ -52,7 +52,7 @@ export function Dashboard() {
           icon={<CheckCircle2 size={17} />}
         />
         <Kpi
-          label="Measured waste"
+          label="Recorded waste"
           value={
             <>
               {data.today.some((r) => r.has_waste) ? (
@@ -63,7 +63,7 @@ export function Dashboard() {
               <small style={{ fontSize: 15 }}>kg</small>
             </>
           }
-          note="Today · allocated to meals"
+          note="Today · staff-recorded (weighed or estimated)"
           icon={<Scale size={17} />}
         />
         <Kpi

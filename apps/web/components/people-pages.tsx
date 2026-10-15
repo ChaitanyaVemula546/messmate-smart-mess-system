@@ -601,7 +601,7 @@ export function Devices() {
     <div className="stack">
       <Heading
         title="Connected to the dining hall"
-        description="Provision devices, manage access and check the last received request."
+        description="Manage the R307 fingerprint scanners used for attendance. Manual food waste does not require a device."
         actions={
           <Button onClick={() => setOpen(true)}>
             <Plus size={15} />
@@ -618,7 +618,7 @@ export function Devices() {
         remote.data && (
           <div className="card table-card">
             <Table
-              rows={remote.data}
+              rows={remote.data.filter((d) => d.type === "FINGERPRINT_SCANNER")}
               columns={[
                 { key: "name", label: "Device" },
                 { key: "device_id", label: "Identifier" },
@@ -698,7 +698,7 @@ export function Devices() {
               pattern="[A-Za-z0-9_-]{2,60}"
               value={form.deviceId}
               onChange={(e) => setForm({ ...form, deviceId: e.target.value })}
-              placeholder="WASTE_BIN_01"
+              placeholder="SCANNER_01"
             />
           </Field>
           <Field label="Display name">
@@ -709,29 +709,8 @@ export function Devices() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </Field>
-          <Field label="Device type">
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-            >
-              <option value="FINGERPRINT_SCANNER">Fingerprint scanner</option>
-              <option value="WASTE_MONITOR">Waste monitor</option>
-            </select>
-          </Field>
+          <p className="muted">Device type: Fingerprint scanner</p>
           <div className="fields">
-            <Field label="Maximum capacity (kg)">
-              <input
-                type="number"
-                required
-                min={0.1}
-                max={1000}
-                step="any"
-                value={form.capacityKg}
-                onChange={(e) =>
-                  setForm({ ...form, capacityKg: Number(e.target.value) })
-                }
-              />
-            </Field>
             <Field label="Firmware version">
               <input
                 value={form.firmwareVersion}

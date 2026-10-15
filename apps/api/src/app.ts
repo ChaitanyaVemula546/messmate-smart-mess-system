@@ -9,6 +9,7 @@ import { studentRoutes } from "./student";
 import { iotRoutes } from "./iot";
 import { peopleRoutes } from "./admin-people";
 import { dataRoutes } from "./admin-data";
+import { manualWasteRoutes } from "./admin-waste";
 import { errors, ok, route, type Context } from "./http";
 export function buildApp(ctx: Context) {
   if (ctx.secret.length < 32)
@@ -60,6 +61,7 @@ export function buildApp(ctx: Context) {
   admin.use(sec.requireUser, sec.roles("ADMIN", "MESS_ADMIN"), sec.csrf);
   admin.use(peopleRoutes(ctx, sec));
   admin.use(dataRoutes(ctx, sec));
+  admin.use(manualWasteRoutes(ctx));
   app.use("/api/admin", admin);
   app.use((_req, res) =>
     res.status(404).json({
