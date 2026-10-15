@@ -191,7 +191,7 @@ export function dataRoutes(ctx: Context, sec: Security) {
         await audit(
           tx,
           user(res),
-          "DEMO_PREDICTIONS_GENERATED",
+          "BASELINE_PREDICTIONS_GENERATED",
           "prediction",
           v.date,
           { count: n },
@@ -201,8 +201,8 @@ export function dataRoutes(ctx: Context, sec: Security) {
       ok(res, {
         count,
         message: count
-          ? "Demo baselines generated."
-          : "Insufficient history: at least three observed meal dates required.",
+          ? "Historical baselines generated."
+          : "Insufficient historical attendance and no student meal intentions.",
       });
     }),
   );
@@ -211,7 +211,7 @@ export function dataRoutes(ctx: Context, sec: Security) {
     route(async (_req, res) => {
       await ctx.db.transaction(async (tx) => {
         await tx.query(
-          sql`INSERT INTO prediction_results(prediction_id,actual_attendance,actual_waste,evaluated_at) SELECT p.id,(SELECT count(*)::int FROM attendance a WHERE a.date=p.date AND a.meal=p.meal),(SELECT sum(delta_kg) FROM waste_measurements w WHERE w.date=p.date AND w.meal=p.meal AND NOT w.tare),${ctx.now()} FROM predictions p WHERE p.date<${localClock(ctx.now()).date} ON CONFLICT(prediction_id) DO UPDATE SET actual_attendance=excluded.actual_attendance,actual_waste=excluded.actual_waste,evaluated_at=excluded.evaluated_at`,
+          sql`INSERT INTO prediction_results(prediction_id,actual_attendance,actual_waste,evaluated_at) SELECT p.id,(SELECT count(*)::int FROM attendance a WHERE a.date=p.date AND a.meal=p.meal),(SELECT (w.unserved_kg+w.plate_kg)::float8 FROM manual_waste_records w WHERE w.date=p.date AND w.meal=p.meal AND w.measurement_method='WEIGHED'),${ctx.now()} FROM predictions p WHERE p.date<${localClock(ctx.now()).date} ON CONFLICT(prediction_id) DO UPDATE SET actual_attendance=excluded.actual_attendance,actual_waste=excluded.actual_waste,evaluated_at=excluded.evaluated_at`,
         );
         await audit(tx, user(res), "PREDICTIONS_EVALUATED", "prediction");
       });
@@ -344,16 +344,19 @@ export function dataRoutes(ctx: Context, sec: Security) {
           break;
         case "waste":
           rows = await ctx.db.query(
-            sql`SELECT w.date::text,w.meal,d.device_id,w.weight_kg,w.delta_kg,w.tare,w.measured_at FROM waste_measurements w JOIN devices d ON d.id=w.device_id WHERE w.date BETWEEN ${from} AND ${to} ORDER BY w.measured_at LIMIT 50001`,
+            sql`SELECT w.date::text,w.meal,w.unserved_kg::float8 AS unserved_kg,w.plate_kg::float8 AS plate_kg,(w.unserved_kg+w.plate_kg)::float8 AS total_kg,w.measurement_method,w.remarks,u.name AS recorded_by,w.created_at,w.updated_at FROM manual_waste_records w JOIN users u ON u.id=w.created_by WHERE w.date BETWEEN ${from} AND ${to} ORDER BY w.date,w.meal LIMIT 50001`,
           );
           columns = [
             "date",
             "meal",
-            "device_id",
-            "weight_kg",
-            "delta_kg",
-            "tare",
-            "measured_at",
+            "unserved_kg",
+            "plate_kg",
+            "total_kg",
+            "measurement_method",
+            "remarks",
+            "recorded_by",
+            "created_at",
+            "updated_at",
           ];
           break;
         case "predictions":

@@ -69,253 +69,269 @@ function RangeFields({
     </div>
   );
 }
+type ManualWasteRecord = {
+  id: string;
+  date: string;
+  meal: string;
+  unserved_kg: number;
+  plate_kg: number;
+  total_kg: number;
+  measurement_method: "WEIGHED" | "ESTIMATED";
+  remarks: string;
+  recorded_by: string;
+  created_at: string;
+  updated_at: string;
+};
+type WasteList = Page<ManualWasteRecord> & {
+  waste_kg: number;
+  weighed_kg: number;
+  estimated_kg: number;
+  unserved_kg: number;
+  plate_kg: number;
+};
+const meals = ["BREAKFAST", "LUNCH", "DINNER"] as const;
+type WasteDraft = {
+  date: string;
+  meal: string;
+  unservedKg: string;
+  plateKg: string;
+  measurementMethod: "WEIGHED" | "ESTIMATED";
+  remarks: string;
+};
+const emptyWaste = (date: string): WasteDraft => ({
+  date, meal: "LUNCH", unservedKg: "", plateKg: "",
+  measurementMethod: "WEIGHED", remarks: "",
+});
 export function WastePage() {
   const today = localClock().date;
-  const [from, setFrom] = useState(addDays(today, -6)),
-    [to, setTo] = useState(today),
-    [p, setP] = useState(1),
-    [meal, setMeal] = useState(""),
-    [open, setOpen] = useState(false),
-    [form, setForm] = useState({
-      date: today,
-      meal: "LUNCH",
-      weightKg: 0,
-      estimatedCost: 0,
+  const [from, setFrom] = useState(addDays(today, -6));
+  const [to, setTo] = useState(today);
+  const [p, setP] = useState(1);
+  const [meal, setMeal] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<ManualWasteRecord | null>(null);
+  const [draft, setDraft] = useState<WasteDraft>(emptyWaste(today));
+  const [prepOpen, setPrepOpen] = useState(false);
+  const [prep, setPrep] = useState({
+    date: today, meal: "LUNCH", weightKg: 0, estimatedCost: 0,
+  });
+  const records = useRemote<WasteList>(
+    `/admin/waste/manual?from=${from}&to=${to}&page=${p}&meal=${meal}`,
+  );
+  const dash = useRemote<Dashboard>(`/admin/dashboard?from=${from}&to=${to}`);
+  const action = useAction();
+  const beginNew = () => {
+    setEditing(null);
+    setDraft(emptyWaste(today));
+    setOpen(true);
+  };
+  const beginEdit = (r: ManualWasteRecord) => {
+    setEditing(r);
+    setDraft({
+      date: r.date,
+      meal: r.meal,
+      unservedKg: String(r.unserved_kg),
+      plateKg: String(r.plate_kg),
+      measurementMethod: r.measurement_method,
+      remarks: r.remarks,
     });
-  const dash = useRemote<Dashboard>(`/admin/dashboard?from=${from}&to=${to}`),
-    readings = useRemote<
-      Page<Record<string, unknown>> & { wasteKg: number; unassignedKg: number }
-    >(`/admin/waste?from=${from}&to=${to}&page=${p}&meal=${meal}`),
-    action = useAction();
+    setOpen(true);
+  };
+  const currentTotal = Number(draft.unservedKg || 0) + Number(draft.plateKg || 0);
   return (
     <div className="stack">
       <Heading
-        title="Measure more. Waste less."
-        description="Track food waste from your connected bins, with preparation and cost context."
+        title="Food waste, recorded by people."
+        description="Weigh unserved food and plate waste after each meal, or mark quantities as estimated. No connected scale required."
         actions={
           <>
             <Export kind="waste" from={from} to={to} />
-            <Button onClick={() => setOpen(true)}>
-              <Plus size={15} />
+            <Button variant="secondary" onClick={() => setPrepOpen(true)}>
               Record preparation
             </Button>
+            <Button onClick={beginNew}><Plus size={15} /> Record food waste</Button>
           </>
         }
       />
       <Feedback action={action} />
-      <RangeFields
-        from={from}
-        to={to}
-        setFrom={(v) => {
-          setFrom(v);
-          setP(1);
-        }}
-        setTo={(v) => {
-          setTo(v);
-          setP(1);
-        }}
-      />
-      {dash.loading ? (
-        <Loading />
-      ) : dash.error ? (
-        <Retry error={dash.error} reload={dash.reload} />
-      ) : (
-        dash.data && (
-          <>
-            <div className="kpi-grid">
-              <Kpi
-                label="Meal-attributed waste"
-                value={
-                  dash.data.rows.some((r) => r.has_waste)
-                    ? number(dash.data.totals.wasteKg, 2) + " kg"
-                    : "—"
-                }
-                note="Selected date range"
-              />
-              <Kpi
-                label="Waste per check-in"
-                value={
-                  dash.data.totals.wastePerStudent === null
-                    ? "—"
-                    : number(dash.data.totals.wastePerStudent, 3) + " kg"
-                }
-              />
-              <Kpi
-                label="Waste / prepared food"
-                value={
-                  dash.data.totals.wastePercentage === null
-                    ? "—"
-                    : number(dash.data.totals.wastePercentage) + "%"
-                }
-                note="Requires preparation for every meal"
-              />
-              <Kpi
-                label="Estimated waste cost"
-                value={
-                  dash.data.totals.wasteCost === null
-                    ? "Unavailable"
-                    : "₹" + number(dash.data.totals.wasteCost)
-                }
-                note="Measured waste × configured cost/kg"
-              />
-            </div>
+      <RangeFields from={from} to={to}
+        setFrom={(v) => {setFrom(v); setP(1);}}
+        setTo={(v) => {setTo(v); setP(1);}} />
+      {records.loading ? <Loading /> : records.error ? (
+        <Retry error={records.error} reload={records.reload} />
+      ) : records.data && (
+        <>
+          <div className="kpi-grid">
+            <Kpi label="Recorded waste"
+              value={number(records.data.waste_kg, 2) + " kg"}
+              note={`${records.data.total} meal records in selected range`} />
+            <Kpi label="Weighed waste"
+              value={number(records.data.weighed_kg, 2) + " kg"}
+              note="Measured using a regular scale" />
+            <Kpi label="Estimated waste"
+              value={number(records.data.estimated_kg, 2) + " kg"}
+              note="Not independently measured" />
+            <Kpi label="Unserved / plate waste"
+              value={number(records.data.unserved_kg, 2) + " / " +
+                number(records.data.plate_kg, 2) + " kg"}
+              note="Separate waste categories" />
+          </div>
+          {dash.data && (
             <div className="dashboard-grid">
-              <div className="card">
-                <h3>Food waste over time</h3>
+              <section className="card">
+                <h3>Recorded waste over time</h3>
                 <Trend rows={dash.data.rows} kind="waste" />
-              </div>
-              <div className="card">
+              </section>
+              <section className="card">
                 <h3>Waste by meal</h3>
                 <div className="metric-list">
-                  {["BREAKFAST", "LUNCH", "DINNER"].map((m) => (
+                  {meals.map((m) => (
                     <div key={m}>
                       <span>{m}</span>
-                      <strong>
-                        {number(
-                          dash
-                            .data!.rows.filter((r) => r.meal === m)
-                            .reduce((n, r) => n + r.waste_kg, 0),
-                          2,
-                        )}{" "}
-                        kg
-                      </strong>
+                      <strong>{number(dash.data!.rows.filter((r) => r.meal === m)
+                        .reduce((n, r) => n + r.waste_kg, 0), 2)} kg</strong>
                     </div>
                   ))}
                 </div>
-                <div className="divider" />
-                <small>
-                  Estimates depend on recorded preparation and configured
-                  assumptions. Raw cumulative readings are not added together.
-                </small>
-              </div>
+                <small>Weighed and estimated waste are included in the displayed totals,
+                  but only weighed records qualify for measurement-based impact estimates.</small>
+              </section>
             </div>
-          </>
-        )
+          )}
+          <div className="between">
+            <h2>Manual waste history</h2>
+            <Field label="Meal">
+              <select value={meal} onChange={(e) => {
+                setMeal(e.target.value); setP(1);
+              }}>
+                <option value="">All meals</option>
+                {meals.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="card table-card">
+            <Table rows={records.data.items} columns={[
+              {key:"date",label:"Date"},
+              {key:"meal",label:"Meal"},
+              {key:"unserved_kg",label:"Unserved kg",
+                render:(r)=>number(r.unserved_kg,3)},
+              {key:"plate_kg",label:"Plate kg",
+                render:(r)=>number(r.plate_kg,3)},
+              {key:"total_kg",label:"Total kg",
+                render:(r)=>number(r.total_kg,3)},
+              {key:"measurement_method",label:"Method",
+                render:(r)=><Badge tone={r.measurement_method==="WEIGHED"?"":"warning"}>
+                  {r.measurement_method}</Badge>},
+              {key:"recorded_by",label:"Recorded by"},
+              {key:"updated_at",label:"Updated",render:(r)=>timestamp(r.updated_at)},
+              {key:"edit",label:"Edit",render:(r)=>
+                <Button size="small" variant="secondary" onClick={()=>beginEdit(r)}>Edit</Button>},
+            ]} />
+            <Pager {...records.data} onChange={setP} />
+          </div>
+        </>
       )}
-      <div className="between">
-        <h2>Bin readings</h2>
-        <Field label="Filter meal">
-          <select
-            value={meal}
-            onChange={(e) => {
-              setMeal(e.target.value);
-              setP(1);
-            }}
-          >
-            <option value="">All meals</option>
-            {["BREAKFAST", "LUNCH", "DINNER", "UNASSIGNED"].map((m) => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
-      {readings.error ? (
-        <Retry error={readings.error} reload={readings.reload} />
-      ) : (
-        readings.data && (
-          <>
-            <small>
-              Filtered net waste: {number(readings.data.wasteKg, 2)} kg ·
-              Outside meal windows: {number(readings.data.unassignedKg, 2)} kg
-            </small>
-            <div className="card table-card">
-              <Table
-                rows={readings.data.items}
-                columns={[
-                  { key: "date", label: "Date" },
-                  { key: "meal", label: "Meal" },
-                  { key: "device_id", label: "Device" },
-                  { key: "weight_kg", label: "Scale kg" },
-                  {
-                    key: "delta_kg",
-                    label: "Added waste kg",
-                    render: (r) => number(Number(r.delta_kg), 3),
-                  },
-                  {
-                    key: "tare",
-                    label: "Reading type",
-                    render: (r) => (
-                      <Badge tone="neutral">
-                        {r.tare ? "TARE" : "SNAPSHOT"}
-                      </Badge>
-                    ),
-                  },
-                  {
-                    key: "measured_at",
-                    label: "Measured (IST)",
-                    render: (r) => timestamp(r.measured_at),
-                  },
-                ]}
-              />
-              <Pager {...readings.data} onChange={setP} />
-            </div>
-          </>
-        )
-      )}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Record food preparation"
-      >
-        <form
-          className="stack"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void action.run(async () => {
-              await api.request("/admin/preparations", {
-                method: "PUT",
-                body: form,
-              });
-              setOpen(false);
-              await dash.reload();
+      <Modal open={open} onClose={()=>setOpen(false)}
+        title={editing ? "Correct waste record" : "Record food waste"}
+        description="One record per meal. Corrections are saved to the audit history.">
+        <form className="stack" onSubmit={(e)=>{
+          e.preventDefault();
+          void action.run(async()=>{
+            const values = {
+              unservedKg:Number(draft.unservedKg),
+              plateKg:Number(draft.plateKg),
+              measurementMethod:draft.measurementMethod,
+              remarks:draft.remarks,
+            };
+            if (draft.unservedKg==="" || draft.plateKg==="")
+              throw new Error("Enter both waste amounts, including zero if applicable.");
+            if (values.unservedKg < 0 || values.plateKg < 0 ||
+              values.unservedKg > 5000 || values.plateKg > 5000 ||
+              !Number.isFinite(values.unservedKg) || !Number.isFinite(values.plateKg))
+              throw new Error("Enter valid waste quantities between 0 and 5000 kg.");
+            await api.request(editing
+              ? `/admin/waste/manual/${editing.id}` : "/admin/waste/manual", {
+              method:editing ? "PATCH" : "POST",
+              body:editing ? values : { ...values, date:draft.date, meal:draft.meal },
             });
-          }}
-        >
+            setOpen(false);
+            await Promise.all([records.reload(),dash.reload()]);
+          }, editing ? "Waste correction saved." : "Waste record saved.");
+        }}>
           <div className="fields">
-            <Field label="Date">
-              <input
-                type="date"
-                required
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-              />
+            <Field label="Date (Asia/Kolkata)">
+              <input required type="date" max={today}
+                value={draft.date} disabled={Boolean(editing)}
+                onChange={(e)=>setDraft({...draft,date:e.target.value})}/>
             </Field>
             <Field label="Meal">
-              <select
-                value={form.meal}
-                onChange={(e) => setForm({ ...form, meal: e.target.value })}
-              >
-                {["BREAKFAST", "LUNCH", "DINNER"].map((m) => (
-                  <option key={m}>{m}</option>
-                ))}
+              <select required value={draft.meal} disabled={Boolean(editing)}
+                onChange={(e)=>setDraft({...draft,meal:e.target.value})}>
+                {meals.map((m)=><option key={m} value={m}>{m}</option>)}
+              </select>
+            </Field>
+            <Field label="Unserved food (kg)">
+              <input required type="number" step="0.001" min="0" max="5000"
+                value={draft.unservedKg} onChange={(e)=>
+                  setDraft({...draft,unservedKg:e.target.value})}/>
+            </Field>
+            <Field label="Plate waste (kg)">
+              <input required type="number" step="0.001" min="0" max="5000"
+                value={draft.plateKg} onChange={(e)=>
+                  setDraft({...draft,plateKg:e.target.value})}/>
+            </Field>
+            <Field label="How was waste determined?">
+              <select value={draft.measurementMethod} onChange={(e)=>
+                setDraft({...draft,measurementMethod:e.target.value as WasteDraft["measurementMethod"]})}>
+                <option value="WEIGHED">Weighed on a kitchen scale</option>
+                <option value="ESTIMATED">Estimated, not weighed</option>
+              </select>
+            </Field>
+            <Field label="Notes (optional)">
+              <textarea maxLength={500} value={draft.remarks}
+                onChange={(e)=>setDraft({...draft,remarks:e.target.value})}/>
+            </Field>
+          </div>
+          <p><strong>Total: {number(currentTotal,3)} kg</strong></p>
+          {action.error && <ErrorBox message={action.error}/>}
+          <Button type="submit" disabled={action.busy}>
+            {action.busy ? "Saving…" : editing ? "Save correction" : "Save waste record"}
+          </Button>
+        </form>
+      </Modal>
+      <Modal open={prepOpen} onClose={()=>setPrepOpen(false)}
+        title="Record food preparation">
+        <form className="stack" onSubmit={(e)=>{
+          e.preventDefault();
+          void action.run(async()=>{
+            await api.request("/admin/preparations",{method:"PUT",body:prep});
+            setPrepOpen(false);
+            await dash.reload();
+          }, "Preparation saved.");
+        }}>
+          <div className="fields">
+            <Field label="Date">
+              <input type="date" required value={prep.date} onChange={(e)=>
+                setPrep({...prep,date:e.target.value})}/>
+            </Field>
+            <Field label="Meal">
+              <select value={prep.meal} onChange={(e)=>
+                setPrep({...prep,meal:e.target.value})}>
+                {meals.map((m)=><option key={m}>{m}</option>)}
               </select>
             </Field>
             <Field label="Food prepared (kg)">
-              <input
-                type="number"
-                min={0.01}
-                step="any"
-                required
-                value={form.weightKg}
-                onChange={(e) =>
-                  setForm({ ...form, weightKg: Number(e.target.value) })
-                }
-              />
+              <input type="number" required min="0.001" step="any"
+                value={prep.weightKg} onChange={(e)=>
+                  setPrep({...prep,weightKg:Number(e.target.value)})}/>
             </Field>
             <Field label="Estimated preparation cost (₹)">
-              <input
-                type="number"
-                min={0}
-                step="any"
-                required
-                value={form.estimatedCost}
-                onChange={(e) =>
-                  setForm({ ...form, estimatedCost: Number(e.target.value) })
-                }
-              />
+              <input type="number" required min="0" step="any"
+                value={prep.estimatedCost} onChange={(e)=>
+                  setPrep({...prep,estimatedCost:Number(e.target.value)})}/>
             </Field>
           </div>
-          {action.error && <ErrorBox message={action.error} />}
+          {action.error && <ErrorBox message={action.error}/>}
           <Button disabled={action.busy}>Save preparation</Button>
         </form>
       </Modal>
@@ -471,8 +487,8 @@ export function Reports() {
               <small>
                 Estimates compare recorded meal waste with your configured
                 baseline. Conversion factors are assumptions, not direct
-                measurements. Out-of-window waste is shown separately on the
-                waste page.
+                assumptions, not verified savings. Unweighed estimates are
+                excluded from measurement-based impact calculations.
               </small>
             </div>
             <div className="card table-card">
@@ -514,7 +530,7 @@ export function Predictions() {
         description="A transparent historical baseline. Ready for a trained model when your data is ready."
         actions={
           <>
-            <Badge tone="warning">DEMO PREDICTION</Badge>
+            <Badge tone="warning">HISTORICAL BASELINE</Badge>
             <Export
               kind="predictions"
               from={addDays(today, -30)}
@@ -534,8 +550,8 @@ export function Predictions() {
               { method: "POST", body: { date, holiday, specialEvent: event } },
             );
             await remote.reload();
-            if (!r.message.startsWith("Demo")) throw new Error(r.message);
-          }, "Demo predictions generated.");
+            if (!r.message.startsWith("Historical")) throw new Error(r.message);
+          }, "Historical baselines generated.");
         }}
       >
         <div className="toolbar">
@@ -626,7 +642,7 @@ export function Predictions() {
                 {
                   key: "source",
                   label: "Source",
-                  render: () => <Badge tone="warning">DEMO PREDICTION</Badge>,
+                  render: (r) => <Badge tone="warning">{r.source}</Badge>,
                 },
               ]}
             />

@@ -38,9 +38,12 @@ export function summarize(rows: MetricRow[], s: Settings): Totals {
     actual = rows.reduce((n, r) => n + r.actual, 0),
     wasteKg = rows.reduce((n, r) => n + r.waste_kg, 0),
     preparedKg = rows.reduce((n, r) => n + (r.prepared_kg ?? 0), 0);
+  // Only directly weighed waste is eligible for measurement-based savings.
+  // Missing observations must never silently count as 0 kg.
   const complete =
     rows.some((r) => r.has_waste) &&
-    rows.filter((r) => r.actual > 0).every((r) => r.has_waste);
+    rows.filter((r) => r.actual > 0 || r.has_waste)
+      .every((r) => r.has_waste && r.waste_method === "WEIGHED");
   const avoidedKg =
     s.baselineWastePerStudent === null || !complete
       ? null
@@ -65,7 +68,7 @@ export function summarize(rows: MetricRow[], s: Settings): Totals {
         ? avoidedKg * s.costPerKg
         : null,
     wasteCost:
-      s.costPerKg !== null && rows.some((r) => r.has_waste)
+      s.costPerKg !== null && complete
         ? wasteKg * s.costPerKg
         : null,
     co2Avoided:

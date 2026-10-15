@@ -68,6 +68,7 @@ export interface MetricRow {
   actual: number;
   waste_kg: number;
   has_waste: boolean;
+  waste_method: "WEIGHED" | "ESTIMATED" | null;
   prepared_kg: number | null;
   cost: number | null;
   predicted_attendance: number | null;

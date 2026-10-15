@@ -136,6 +136,23 @@ export const preparation = z
     estimatedCost: z.number().nonnegative().max(10000000),
   })
   .strict();
+// A single meal record; values are kilograms with up to three decimal places.
+const wasteKg = z.number().finite().min(0).max(5000)
+  .refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6,
+    "Use at most three decimal places (grams precision)");
+export const manualWaste = z.object({
+  date,
+  meal,
+  unservedKg: wasteKg,
+  plateKg: wasteKg,
+  measurementMethod: z.enum(["WEIGHED", "ESTIMATED"]),
+  remarks: z.string().max(500).default(""),
+}).strict();
+export const manualWasteUpdate = manualWaste.pick({
+  unservedKg: true, plateKg: true,
+  measurementMethod: true, remarks: true,
+}).partial().refine((v) => Object.keys(v).length > 0,
+  "Supply at least one field to update");
 export const manual = z
   .object({
     studentId: z.string().uuid(),

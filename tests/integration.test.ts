@@ -422,7 +422,7 @@ describe("Shared API software integration", () => {
     );
     expect(r.status).toBe(200);
     expect(r.body.data.totals.actual).toBe(1);
-    expect(r.body.data.totals.wasteKg).toBeCloseTo(4.42);
+    expect(r.body.data.totals.wasteKg).toBe(0); // legacy IoT observations do not count
     expect(r.body.data.totals.savedMoney).toBeNull();
   });
   it("protects assumptions and audit logs; responses omit hashes", async () => {
@@ -709,7 +709,7 @@ describe("Shared API software integration", () => {
     );
     expect(report.status).toBe(200);
     expect(report.body.data.totals.preparedKg).toBe(10);
-    expect(report.body.data.totals.savedMoney).toBeCloseTo(15.8);
+    expect(report.body.data.totals.savedMoney).toBeNull(); // no weighed manual observations
     expect(
       (
         await request(
@@ -731,6 +731,9 @@ describe("Shared API software integration", () => {
       adminCookie,
     );
     expect(imported.body.data.successful).toBe(3);
+    // Breakfast is supported by historical attendance; lunch also has an
+    // explicit NOT_COMING intention from an earlier integration test. Both
+    // sessions legitimately receive forecasts (lunch attendance = 0).
     expect(
       (
         await request(
@@ -740,7 +743,7 @@ describe("Shared API software integration", () => {
           managerCookie,
         )
       ).body.data.count,
-    ).toBe(1);
+    ).toBe(2);
     const result = await request(
       "/admin/predictions?date=2026-09-07",
       "GET",
@@ -748,12 +751,20 @@ describe("Shared API software integration", () => {
       adminCookie,
     );
     expect(result.body.data[0]).toMatchObject({
-      source: "DEMO_BASELINE",
-      sample_count: 3,
+      source: "HISTORICAL_BASELINE",
+      sample_count: 0,
       attendance: 1,
       food_kg: 0.5,
       waste_kg: null,
     });
+    expect(result.body.data).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        meal: "LUNCH",
+        source: "INTENTIONS_PLUS_HISTORICAL_BASELINE",
+        attendance: 0,
+        waste_kg: null,
+      }),
+    ]));
     clock = new Date("2026-09-08T06:45:00Z");
     try {
       expect(
@@ -786,8 +797,73 @@ describe("Shared API software integration", () => {
       (await request("/auth/session", "GET", undefined, studentCookie)).status,
     ).toBe(200);
     clock = new Date("2026-09-15T06:45Z");
-    expect(
-      (await request("/auth/session", "GET", undefined, studentCookie)).status,
-    ).toBe(401);
+    try {
+      expect(
+        (await request("/auth/session", "GET", undefined, studentCookie)).status,
+      ).toBe(401);
+    } finally {
+      // Restore the shared fake clock so later tests use valid test sessions.
+      clock = new Date("2026-09-06T06:45:00Z");
+    }
+  });
+});
+
+
+describe("manual waste replacement", () => {
+  const weighed = {
+    date: "2026-09-05", meal: "DINNER",
+    unservedKg: 1.5, plateKg: 0.4,
+    measurementMethod: "WEIGHED", remarks: "Measured with a kitchen scale",
+  };
+  it("rejects students, future records and invalid quantities", async () => {
+    expect((await request("/admin/waste/manual", "POST", weighed, studentCookie)).status).toBe(403);
+    expect((await request("/admin/waste/manual", "POST",
+      { ...weighed, plateKg: -2 }, adminCookie)).status).toBe(400);
+    expect((await request("/admin/waste/manual", "POST",
+      { ...weighed, plateKg: 0.0004 }, adminCookie)).status).toBe(400);
+    expect((await request("/admin/waste/manual", "POST",
+      { ...weighed, date:"2026-10-20" }, adminCookie)).status).toBe(400);
+  });
+  it("persists one meal record, prevents duplicates and records correction history", async () => {
+    const r = await request("/admin/waste/manual", "POST", weighed, managerCookie);
+    expect(r.status).toBe(201);
+    expect(r.body.data.total_kg).toBeCloseTo(1.9);
+    const id = r.body.data.id;
+    expect((await request("/admin/waste/manual", "POST", weighed, managerCookie)).status).toBe(409);
+    const corrected = await request(`/admin/waste/manual/${id}`, "PATCH",
+      { plateKg: 0.5, remarks: "Verified on second weigh-in" }, adminCookie);
+    expect(corrected.status).toBe(200);
+    expect(corrected.body.data.total_kg).toBeCloseTo(2);
+    const details = await request(`/admin/waste/manual/${id}`, "GET", undefined, adminCookie);
+    expect(details.body.data.revisions).toHaveLength(2);
+    const listed = await request(
+      "/admin/waste/manual?from=2026-09-05&to=2026-09-05&meal=DINNER",
+      "GET", undefined, adminCookie);
+    expect(listed.body.data.total).toBe(1);
+    expect(listed.body.data.weighed_kg).toBeCloseTo(2);
+  });
+  it("keeps estimates separate from real weighed records", async () => {
+    const r = await request("/admin/waste/manual", "POST", {
+      date: "2026-09-05", meal: "LUNCH",
+      unservedKg: 0, plateKg: 0.25,
+      measurementMethod: "ESTIMATED", remarks: "Visual estimate",
+    }, adminCookie);
+    expect(r.status).toBe(201);
+    const list = await request(
+      "/admin/waste/manual?from=2026-09-05&to=2026-09-05",
+      "GET", undefined, adminCookie);
+    expect(list.body.data.total).toBe(2);
+    expect(list.body.data.weighed_kg).toBeCloseTo(2);
+    expect(list.body.data.estimated_kg).toBeCloseTo(0.25);
+    const dash = await request(
+      "/admin/dashboard?date=2026-09-05", "GET", undefined, adminCookie);
+    expect(dash.body.data.rows.find((r: {meal: string}) => r.meal==="LUNCH").waste_method).toBe("ESTIMATED");
+    expect(dash.body.data.totals.wasteKg).toBeCloseTo(2.25);
+    expect(dash.body.data.totals.savedMoney).toBeNull();
+    const csvResult = await request(
+      "/admin/export/waste?date=2026-09-05", "GET", undefined, adminCookie);
+    expect(csvResult.status).toBe(200);
+    expect(csvResult.body).toContain("ESTIMATED");
+    expect(csvResult.body).not.toContain("WASTE_BIN_01");
   });
 });

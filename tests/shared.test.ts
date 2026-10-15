@@ -61,6 +61,7 @@ describe("Calendar and metrics", () => {
         actual: 8,
         waste_kg: 1,
         has_waste: true,
+        waste_method: "WEIGHED",
         prepared_kg: 4,
         cost: 30,
         predicted_attendance: null,
@@ -90,6 +91,7 @@ describe("Calendar and metrics", () => {
       actual: 8,
       waste_kg: 0,
       has_waste: false,
+      waste_method: null,
       prepared_kg: 4,
       cost: 30,
       predicted_attendance: null,
@@ -97,7 +99,9 @@ describe("Calendar and metrics", () => {
     };
     expect(summarize([row], settings).savedMoney).toBeNull();
     expect(summarize([row], settings).wastePerStudent).toBeNull();
-    expect(summarize([{ ...row, has_waste: true }], settings).savedMoney).toBe(
+    expect(summarize([{ ...row, has_waste: true,
+      waste_method: "ESTIMATED" }], settings).savedMoney).toBeNull();
+    expect(summarize([{ ...row, has_waste: true, waste_method: "WEIGHED" }], settings).savedMoney).toBe(
       20,
     );
   });
